@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { getLocalDateKST, CATEGORIES } from '@/types';
 import { COMPETENCY_MAP, getPersona } from '@/lib/competencies';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+// import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface StatsData {
     // 30일
@@ -382,7 +382,7 @@ function MomentumItem({ label, recent, prev, unit }: { label: string; recent: nu
             <p className="text-xs text-gray-400 mb-1">{label}</p>
             <p className="text-xl font-extrabold text-gray-900">{recent}<span className="text-xs text-gray-400 ml-1">{unit}</span></p>
             <div className="flex items-center gap-1 mt-0.5">
-                {delta > 0 ? <TrendingUp size={12} className="text-green-500" /> : delta < 0 ? <TrendingDown size={12} className="text-red-400" /> : <Minus size={12} className="text-gray-400" />}
+                {delta > 0 ? <span className="text-green-500">📈</span> : delta < 0 ? <span className="text-red-400">📉</span> : <span className="text-gray-400">−</span>}
                 <span className={`text-xs font-semibold ${delta > 0 ? 'text-green-500' : delta < 0 ? 'text-red-400' : 'text-gray-400'}`}>
                     {delta > 0 ? `+${delta}` : delta} {unit}
                 </span>
