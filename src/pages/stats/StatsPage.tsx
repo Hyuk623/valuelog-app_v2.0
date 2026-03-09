@@ -346,7 +346,7 @@ export function StatsPage() {
                     </div>
                 ) : (
                     <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm mb-4 text-center">
-                        <span className="text-3xl mb-2 block">🌱</span>
+                        <img src="/favicon.svg" alt="Lock" className="w-12 h-12 mx-auto mb-3 opacity-60 grayscale shadow-sm rounded-full bg-white" />
                         <p className="font-bold text-gray-800 text-sm mb-1.5">성과 분석 준비 중</p>
                         <p className="text-xs text-gray-500 leading-relaxed">기록이 5개 이상 쌓이면 커리어 코칭을 위한<br />나만의 강점 분석이 시작됩니다! ({stats.totalRecords}/5)</p>
                         <div className="mt-4 h-1.5 bg-gray-100 rounded-full max-w-[120px] mx-auto overflow-hidden">

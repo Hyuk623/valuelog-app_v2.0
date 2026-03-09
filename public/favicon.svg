@@ -1,4 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="50" fill="#22c55e"/>
-  <text y=".9em" font-size="70" x="15">🌱</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&amp;display=swap');
+      .logo-text { font-family: 'Montserrat', sans-serif; font-weight: 800; fill: #ffffff; text-anchor: middle; }
+    </style>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="#3D3D3D"/>
+  <text x="246" y="320" font-size="240" class="logo-text" letter-spacing="-20">VL</text>
+  <text x="256" y="420" font-size="65" class="logo-text" letter-spacing="1">ValueLog</text>
 </svg>
