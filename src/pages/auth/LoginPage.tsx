@@ -71,7 +71,7 @@ export function LoginPage() {
         <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-gradient-to-b from-brand-50 to-white">
             {/* Logo */}
             <div className="mb-10 text-center animate-fade-in flex flex-col items-center">
-                <img src="/favicon.svg" alt="ValueLog Logo" className="w-24 h-24 mb-6 shadow-md rounded-full bg-white" />
+                <img src="/favicon.svg?v=2" alt="ValueLog Logo" className="w-24 h-24 mb-6 shadow-md rounded-full bg-white" />
                 <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">ValueLog</h1>
                 <p className="text-gray-500 mt-2 text-base">매일 성장을 기록하세요</p>
             </div>

@@ -27,7 +27,7 @@ function AppRouter() {
   if (!initialized || loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-brand-50 to-white gap-4">
-        <img src="/favicon.svg" alt="ValueLog Logo" className="w-[84px] h-[84px] shadow-sm rounded-full bg-white mb-2 animate-bounce" />
+        <img src="/favicon.svg?v=2" alt="ValueLog Logo" className="w-[84px] h-[84px] shadow-sm rounded-full bg-white mb-2 animate-bounce" />
         <div className="flex gap-1.5">
           <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
           <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
