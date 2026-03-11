@@ -1,7 +1,7 @@
 # ValueLog v2 🌱
 
 > 매일 퀘스트로 성장을 기록하는 앱
-
+[ValueLog_v2 사용해 보기](https://valuelog-app-v2-2026.web.app) 
 
 ---
 
