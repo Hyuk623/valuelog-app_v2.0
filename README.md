@@ -28,15 +28,17 @@ npm run dev
 # http://localhost:5173 접속
 ```
 
-### 4. Netlify 배포
+### 4. Firebase 배포
 ```bash
-# GitHub push 후 Netlify에서 자동 배포
-# 또는:
-npm install -g netlify-cli
-netlify deploy --prod
+# Firebase CLI 로그인 (최초 1회)
+npx firebase login
+
+# 빌드 및 배포
+npm run build
+npx firebase deploy
 ```
 
-자세한 배포 가이드: **[docs/NETLIFY_DEPLOY_V2.md](docs/NETLIFY_DEPLOY_V2.md)**
+자세한 배포 가이드: **[docs/FIREBASE_DEPLOY_V2.md](docs/FIREBASE_DEPLOY_V2.md)**
 
 ---
 
@@ -62,11 +64,11 @@ netlify deploy --prod
 ## 🛠 기술 스택
 
 - **Frontend**: React 19 + Vite + TypeScript
-- **Style**: TailwindCSS v4
-- **Routing**: React Router v6
+- **Style**: TailwindCSS v4 (Vanilla CSS)
+- **Routing**: React Router v7
 - **State**: Zustand
 - **Backend**: Supabase (Auth + PostgreSQL + RLS)
-- **배포**: Netlify (프론트) + Supabase (백엔드)
+- **배포**: Firebase Hosting (프론트) + Supabase (백엔드)
 
 ---
 
@@ -75,7 +77,7 @@ netlify deploy --prod
 - [제품 스펙](docs/PRODUCT_SPEC_V2.md)
 - [아키텍처](docs/ARCHITECTURE_V2.md)
 - [DB 스키마](docs/SUPABASE_SCHEMA_V2.sql)
-- [배포 가이드](docs/NETLIFY_DEPLOY_V2.md)
+- [배포 가이드](docs/FIREBASE_DEPLOY_V2.md)
 
 ---
 
