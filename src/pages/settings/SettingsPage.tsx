@@ -196,7 +196,7 @@ export function SettingsPage() {
 
             {/* Privacy Policy Modal */}
             {showPrivacyPolicy && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in px-4">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 animate-fade-in px-4">
                     <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl animate-slide-up max-h-[85vh] flex flex-col">
                         <div className="flex items-center gap-2 mb-4">
                             <Shield className="text-brand-500" size={24} />
@@ -233,7 +233,7 @@ export function SettingsPage() {
 
             {/* Delete Confirm Modal */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in px-4">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 animate-fade-in px-4">
                     <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl animate-slide-up">
                         <div className="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center mb-4 mx-auto">
                             <Trash2 size={24} />
@@ -253,7 +253,7 @@ export function SettingsPage() {
 
             {/* Sign Out Confirm Modal */}
             {showSignOutConfirm && (
-                <div className="fixed inset-0 bg-black/50 flex items-end z-50 animate-fade-in">
+                <div className="fixed inset-0 bg-black/50 flex items-end z-[100] animate-fade-in">
                     <div className="w-full max-w-[480px] mx-auto bg-white rounded-t-3xl p-6 animate-slide-up pb-8">
                         <h3 className="text-xl font-extrabold text-gray-900 mb-2">로그아웃 할까요?</h3>
                         <p className="text-gray-500 text-sm mb-6">다시 로그인하면 모든 기록을 볼 수 있어요.</p>

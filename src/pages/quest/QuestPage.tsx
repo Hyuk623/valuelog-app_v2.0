@@ -124,9 +124,15 @@ export function QuestPage() {
     };
 
     const getChatFontSizeClass = () => {
-        if (fontSize === 'small') return 'text-xs';
-        if (fontSize === 'large') return 'text-lg';
-        return 'text-sm';
+        if (fontSize === 'small') return 'text-[13px]';
+        if (fontSize === 'large') return 'text-[18px]';
+        return 'text-[15px]';
+    };
+
+    const getInputFontSizeClass = () => {
+        // Prevent iOS zoom: minimum 16px
+        if (fontSize === 'large') return 'text-[18px]';
+        return 'text-[16px]';
     };
 
     const scrollToBottom = () => {
@@ -435,8 +441,17 @@ export function QuestPage() {
                                 ))}
                             </div>
                         )}
-                        <textarea ref={textareaRef} value={currentAnswer} onChange={e => setCurrentAnswer(e.target.value)} placeholder={step.placeholder} rows={3}
-                            className={cn("w-full px-4 py-3 rounded-2xl border-2 border-gray-200 text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-brand-400 transition-all text-[16px]", getChatFontSizeClass())} />
+                        <textarea
+                            ref={textareaRef}
+                            value={currentAnswer}
+                            onChange={e => setCurrentAnswer(e.target.value)}
+                            placeholder={step.placeholder}
+                            rows={3}
+                            className={cn(
+                                "w-full px-4 py-3 rounded-2xl border-2 border-gray-200 text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-brand-400 transition-all",
+                                getInputFontSizeClass()
+                            )}
+                        />
                         <div className="flex gap-3 mt-3">
                             {!step.required && <Button variant="secondary" onClick={handleNext} className="flex-1">건너뛰기</Button>}
                             <Button onClick={handleNext} disabled={step.required && !currentAnswer.trim()} className="flex-1">
