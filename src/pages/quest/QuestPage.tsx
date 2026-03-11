@@ -7,6 +7,8 @@ import type { PromptSet, PromptStep, QuestAnswer, NewlyEarnedBadge, ExperienceCo
 import { COMPETENCIES, calcCompetencyLevel, calcTrust, calcXPBonus, TRUST_LABELS } from '@/lib/competencies';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, X, ImagePlus, Plus, Trash2, CheckSquare, Square } from 'lucide-react';
+import { useUIStore } from '@/store/uiStore';
+import { cn } from '@/lib/utils';
 
 // ===================== Built-in Prompts =====================
 const BUILTIN_PROMPTS: Record<string, PromptStep[]> = {
@@ -111,6 +113,31 @@ export function QuestPage() {
 
     // XP summary
     const [xpResult, setXpResult] = useState<{ base: number; bonus: number; total: number; breakdown: string[]; trustLabel: string } | null>(null);
+
+    const { fontSize } = useUIStore();
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    const getFontSizeClass = (base: string) => {
+        if (fontSize === 'small') return 'text-xs';
+        if (fontSize === 'large') return 'text-base';
+        return base;
+    };
+
+    const getChatFontSizeClass = () => {
+        if (fontSize === 'small') return 'text-xs';
+        if (fontSize === 'large') return 'text-lg';
+        return 'text-sm';
+    };
+
+    const scrollToBottom = () => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        if (stage === 'answering') {
+            scrollToBottom();
+        }
+    }, [answers, currentStep, stage]);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -336,7 +363,7 @@ export function QuestPage() {
                 <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-gray-100">
                     {stage === 'answering' ? <X size={22} className="text-gray-500" /> : <ChevronLeft size={22} className="text-gray-500" />}
                 </button>
-                <p className="text-sm font-semibold text-brand-500">
+                <p className={cn("font-semibold text-brand-500", getFontSizeClass('text-sm'))}>
                     {stage === 'answering' ? `${catInfo.icon} ${catInfo.label}` : stage === 'photo' ? '📸 활동 사진' : stage === 'enrichment' ? '✨ 기록 강화하기' : '오늘의 퀘스트'}
                 </p>
             </div>
@@ -373,30 +400,31 @@ export function QuestPage() {
                         </div>
                         <p className="text-xs text-gray-400 text-right">{currentStep + 1} / {promptSet.steps.length}</p>
                     </div>
-                    <div className="flex-1 px-5 py-4 overflow-y-auto space-y-4">
+                    <div className="flex-1 px-5 py-4 overflow-y-auto space-y-4 scroll-smooth">
                         {answers.map((ans, idx) => {
                             const s = promptSet.steps[idx];
                             return s ? (
                                 <div key={idx} className="space-y-2 animate-fade-in">
                                     <div className="flex items-start gap-2">
                                         <div className="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">V</div>
-                                        <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-gray-700 max-w-[80%]">{s.question}</div>
+                                        <div className={cn("bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 text-gray-700 max-w-[80%]", getChatFontSizeClass())}>{s.question}</div>
                                     </div>
                                     <div className="flex justify-end">
-                                        <div className="bg-brand-500 rounded-2xl rounded-tr-sm px-4 py-3 text-sm text-white max-w-[80%]">{ans.answer || '(건너뜀)'}</div>
+                                        <div className={cn("bg-brand-500 rounded-2xl rounded-tr-sm px-4 py-3 text-white max-w-[80%]", getChatFontSizeClass())}>{ans.answer || '(건너뜀)'}</div>
                                     </div>
                                 </div>
                             ) : null;
                         })}
                         <div className="flex items-start gap-2 animate-slide-up">
                             <div className="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">V</div>
-                            <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-gray-800 font-medium max-w-[85%]">
+                            <div className={cn("bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 text-gray-800 font-medium max-w-[85%]", getChatFontSizeClass())}>
                                 {step.question}{!step.required && <span className="text-gray-400 text-xs ml-1">(선택)</span>}
                             </div>
                         </div>
                         {step.guide && <p className="text-xs text-gray-400 pl-9 -mt-2">{step.guide}</p>}
+                        <div ref={chatEndRef} />
                     </div>
-                    <div className="px-5 pb-6 border-t border-gray-100 pt-4">
+                    <div className="px-5 pb-6 border-t border-gray-100 pt-4 bg-white">
                         {step.examples && (
                             <div className="flex flex-wrap gap-1.5 mb-3">
                                 {step.examples.map(ex => (
@@ -408,7 +436,7 @@ export function QuestPage() {
                             </div>
                         )}
                         <textarea ref={textareaRef} value={currentAnswer} onChange={e => setCurrentAnswer(e.target.value)} placeholder={step.placeholder} rows={3}
-                            className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-brand-400 transition-all text-sm" />
+                            className={cn("w-full px-4 py-3 rounded-2xl border-2 border-gray-200 text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-brand-400 transition-all text-[16px]", getChatFontSizeClass())} />
                         <div className="flex gap-3 mt-3">
                             {!step.required && <Button variant="secondary" onClick={handleNext} className="flex-1">건너뛰기</Button>}
                             <Button onClick={handleNext} disabled={step.required && !currentAnswer.trim()} className="flex-1">

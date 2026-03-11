@@ -201,7 +201,7 @@ export function HomePage() {
                 </div>
 
                 {/* FAB */}
-                <div className="fixed bottom-24 right-5 z-40">
+                <div className="fixed bottom-24 right-5 z-60">
                     <button
                         onClick={() => navigate('/quest')}
                         className="w-14 h-14 bg-brand-500 hover:bg-brand-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
