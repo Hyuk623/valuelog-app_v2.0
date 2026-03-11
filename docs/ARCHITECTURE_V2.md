@@ -12,7 +12,7 @@
      │
      │ HTTPS
      ▼
-[Netlify CDN]          ← 정적 SPA (React + Vite 빌드)
+[Firebase Hosting]          ← 정적 SPA (React + Vite 빌드)
      │
      │ Supabase JS (REST/Realtime)
      ▼
@@ -209,7 +209,7 @@ VITE_SUPABASE_ANON_KEY=<anon-key>
 ---
 
 ## 9. 배포
-- **Frontend**: Netlify (자동 빌드: `npm run build` → `dist/`)
+- **Frontend**: Firebase Hosting (자동 빌드: `npm run build` → `dist/`)
 - **Backend**: Supabase 프로젝트 (무료 플랜)
 - **OG 메타 자동 수집**: MVP에서 **금지** (CORS 불안정, 운영 이슈)
   - 대안: URL + 수동 제목/메모 저장만

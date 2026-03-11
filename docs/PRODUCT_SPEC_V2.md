@@ -16,7 +16,7 @@
 | Frontend | React + Vite + TypeScript | 빌드 속도, 타입 안전성 |
 | Styling | Tailwind CSS | 유틸리티 퍼스트, 빠른 디자인 반영 |
 | Backend/DB | Supabase (무료 플랜) | Auth + Postgres + Storage + RLS |
-| Deploy | Netlify | 정적 SPA 배포 무료 |
+| Deploy | Firebase Hosting | 무료 플랜 제공, 빠른 배포 |
 | 외부 API | **없음** | CORS 이슈 + 유료 서비스 금지 |
 | LLM | **없음** | 룰베이스/템플릿 기반 |
 

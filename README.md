@@ -2,7 +2,6 @@
 
 > 매일 퀘스트로 성장을 기록하는 앱
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/placeholder/deploy-status)](https://app.netlify.com/sites/valuelog-v2/deploys)
 
 ---
 
