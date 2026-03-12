@@ -191,7 +191,7 @@ export function SettingsPage() {
                     </button>
                 </div>
 
-                <p className="text-center text-xs text-gray-300 py-10">ValueLog v2.0 · Netlify + Supabase</p>
+                <p className="text-center text-xs text-gray-300 py-10">ValueLog v2.0 · Firebase + Supabase</p>
             </div>
 
             {/* Privacy Policy Modal */}
@@ -254,7 +254,8 @@ export function SettingsPage() {
             {/* Sign Out Confirm Modal */}
             {showSignOutConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-end z-[100] animate-fade-in">
-                    <div className="w-full max-w-[480px] mx-auto bg-white rounded-t-3xl p-6 animate-slide-up pb-8">
+                    <div className="w-full max-w-[480px] mx-auto bg-white rounded-t-3xl p-6 animate-slide-up"
+                        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px) + 72px)' }}>
                         <h3 className="text-xl font-extrabold text-gray-900 mb-2">로그아웃 할까요?</h3>
                         <p className="text-gray-500 text-sm mb-6">다시 로그인하면 모든 기록을 볼 수 있어요.</p>
                         <div className="flex gap-3">

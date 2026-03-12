@@ -129,11 +129,6 @@ export function QuestPage() {
         return 'text-[15px]';
     };
 
-    const getInputFontSizeClass = () => {
-        // Prevent iOS zoom: minimum 16px
-        if (fontSize === 'large') return 'text-[18px]';
-        return 'text-[16px]';
-    };
 
     const scrollToBottom = () => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -363,7 +358,7 @@ export function QuestPage() {
     const trustInfo = TRUST_LABELS[xpResult?.trustLabel ?? 'self']!;
 
     return (
-        <div className="flex flex-col min-h-screen bg-white">
+        <div className="flex flex-col bg-white" style={{ height: '100dvh' }}>
             {/* Header */}
             <div className="px-5 pt-12 pb-4 flex items-center gap-3 border-b border-gray-100">
                 <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-gray-100">
@@ -395,10 +390,32 @@ export function QuestPage() {
                 </div>
             )}
 
-            {/* ── Answering ── */}
+            {/* ── Answering ── KakaoTalk-style: fixed screen, scrollable chat, pinned input */}
             {stage === 'answering' && promptSet && step && (
-                <div className="flex-1 flex flex-col">
-                    <div className="px-5 pt-4">
+                <div
+                    className="flex flex-col"
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 40,
+                        background: '#fff',
+                    }}
+                >
+                    {/* Header inside fixed container */}
+                    <div className="px-5 pt-12 pb-4 flex items-center gap-3 border-b border-gray-100 flex-shrink-0">
+                        <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-gray-100">
+                            <X size={22} className="text-gray-500" />
+                        </button>
+                        <p className={cn("font-semibold text-brand-500", getFontSizeClass('text-sm'))}>
+                            {catInfo.icon} {catInfo.label}
+                        </p>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="px-5 pt-3 pb-1 flex-shrink-0">
                         <div className="flex gap-1.5 mb-1">
                             {promptSet.steps.map((_, i) => (
                                 <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i < currentStep ? 'bg-brand-500' : i === currentStep ? 'bg-brand-300' : 'bg-gray-200'}`} />
@@ -406,7 +423,9 @@ export function QuestPage() {
                         </div>
                         <p className="text-xs text-gray-400 text-right">{currentStep + 1} / {promptSet.steps.length}</p>
                     </div>
-                    <div className="flex-1 px-5 py-4 overflow-y-auto space-y-4 scroll-smooth">
+
+                    {/* Chat messages - scrollable */}
+                    <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ overscrollBehavior: 'contain' }}>
                         {answers.map((ans, idx) => {
                             const s = promptSet.steps[idx];
                             return s ? (
@@ -430,7 +449,9 @@ export function QuestPage() {
                         {step.guide && <p className="text-xs text-gray-400 pl-9 -mt-2">{step.guide}</p>}
                         <div ref={chatEndRef} />
                     </div>
-                    <div className="px-5 pb-6 border-t border-gray-100 pt-4 bg-white">
+
+                    {/* Input area - pinned to bottom */}
+                    <div className="flex-shrink-0 px-5 pb-6 border-t border-gray-100 pt-4 bg-white">
                         {step.examples && (
                             <div className="flex flex-wrap gap-1.5 mb-3">
                                 {step.examples.map(ex => (
@@ -447,9 +468,9 @@ export function QuestPage() {
                             onChange={e => setCurrentAnswer(e.target.value)}
                             placeholder={step.placeholder}
                             rows={3}
+                            style={{ fontSize: '16px' }}
                             className={cn(
                                 "w-full px-4 py-3 rounded-2xl border-2 border-gray-200 text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-brand-400 transition-all",
-                                getInputFontSizeClass()
                             )}
                         />
                         <div className="flex gap-3 mt-3">
