@@ -41,24 +41,24 @@ export function HomePage() {
     }, [user, dailyProgress]);
 
     return (
-        <div className="flex flex-col min-h-full bg-gray-50">
+        <div className="flex flex-col min-h-full bg-surface-2 transition-colors duration-300">
             {/* Header */}
-            <div className="bg-white px-5 pt-12 pb-6 border-b border-gray-100">
+            <div className="bg-surface px-5 pt-12 pb-6 border-b border-border transition-colors duration-300">
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <p className="text-gray-400 text-sm">{today}</p>
-                        <h1 className="text-xl font-extrabold text-gray-900 mt-0.5">
-                            안녕하세요, {profile?.display_name ?? '게스트'}님! 👋
+                        <h1 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 mt-0.5 transition-colors duration-300">
+                            안녕하세요, <span className="text-brand-500">{profile?.display_name ?? '게스트'}</span>님! 👋
                         </h1>
                     </div>
                     {/* Streak Badges */}
                     <div className="flex items-center gap-2">
-                        <div className={`flex flex-col items-center px-3 py-2 rounded-2xl ${streak > 0 ? 'bg-orange-50' : 'bg-gray-100'}`}>
+                        <div className={`flex flex-col items-center px-3 py-2 rounded-2xl ${streak > 0 ? 'bg-orange-50 dark:bg-orange-950/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
                             <span className="text-2xl">{streak > 0 ? '🔥' : '💤'}</span>
                             <span className={`text-xs font-bold mt-0.5 ${streak > 0 ? 'text-orange-500' : 'text-gray-400'}`}>{streak}일</span>
                         </div>
                         {growthStreak > 0 && (
-                            <div className="flex flex-col items-center px-3 py-2 rounded-2xl bg-green-50">
+                            <div className="flex flex-col items-center px-3 py-2 rounded-2xl bg-green-50 dark:bg-green-950/30">
                                 <span className="text-2xl">🌿</span>
                                 <span className="text-xs font-bold mt-0.5 text-green-600">{growthStreak}일</span>
                             </div>
@@ -67,15 +67,15 @@ export function HomePage() {
                 </div>
 
                 {/* XP / Level Bar */}
-                <div className="bg-gray-50 rounded-2xl p-4">
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                             <Star size={16} className="text-xp-500 fill-xp-400" />
-                            <span className="text-sm font-bold text-gray-700">Lv.{levelInfo.level} {levelInfo.label}</span>
+                            <span className="text-sm font-bold text-gray-700 dark:text-gray-200">Lv.{levelInfo.level} {levelInfo.label}</span>
                         </div>
                         <span className="text-xs text-gray-400 font-medium">{totalXP} / {levelInfo.nextXP} XP</span>
                     </div>
-                    <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden transition-colors">
                         <div
                             className="h-full bg-gradient-to-r from-xp-400 to-xp-500 rounded-full animate-progress-fill transition-all duration-700"
                             style={{ width: `${progressPct}%` }}
@@ -142,11 +142,11 @@ export function HomePage() {
                 </div>
 
                 {/* Weekly Goal */}
-                <div className="bg-white rounded-2xl p-5 border border-gray-100">
+                <div className="bg-white dark:bg-gray-800/40 rounded-2xl p-5 border border-gray-100 dark:border-gray-700/50 transition-colors">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <Trophy size={18} className="text-brand-500" />
-                            <span className="font-bold text-gray-800">이번주 목표</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-100">이번주 목표</span>
                         </div>
                         <span className="text-sm text-gray-400">{weeklyDone} / {weeklyGoal}회</span>
                     </div>
@@ -154,7 +154,7 @@ export function HomePage() {
                         {Array.from({ length: weeklyGoal }).map((_, i) => (
                             <div
                                 key={i}
-                                className={`h-2.5 flex-1 rounded-full transition-all duration-500 ${i < weeklyDone ? 'bg-brand-500' : 'bg-gray-200'
+                                className={`h-2.5 flex-1 rounded-full transition-all duration-500 ${i < weeklyDone ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700'
                                     }`}
                             />
                         ))}
@@ -167,7 +167,7 @@ export function HomePage() {
                 {/* Quick Categories */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
-                        <span className="font-bold text-gray-800">자주 쓰는 카테고리</span>
+                        <span className="font-bold text-gray-800 dark:text-gray-100">자주 쓰는 카테고리</span>
                         <button onClick={() => navigate('/timeline')} className="text-brand-500 text-sm font-semibold">전체보기</button>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
@@ -189,10 +189,10 @@ export function HomePage() {
                                     <button
                                         key={key}
                                         onClick={() => navigate('/quest', { state: { category: key } })}
-                                        className="flex flex-col items-center gap-2 bg-white rounded-2xl p-4 border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all duration-200 active:scale-95"
+                                        className="flex flex-col items-center gap-2 bg-white dark:bg-gray-800/40 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50 hover:border-brand-200 transition-all duration-200 active:scale-95"
                                     >
                                         <span className="text-2xl">{cat.icon}</span>
-                                        <span className="text-xs font-semibold text-gray-600">{cat.label}</span>
+                                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{cat.label}</span>
                                     </button>
                                 );
                             });
@@ -210,15 +210,15 @@ export function HomePage() {
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 
 function StatCard({ icon, label, value, color }: { icon: string; label: string; value: string; color: string }) {
     const colors: Record<string, string> = {
-        orange: 'bg-orange-50 text-orange-600',
-        yellow: 'bg-yellow-50 text-yellow-600',
-        purple: 'bg-purple-50 text-purple-600',
+        orange: 'bg-orange-50 text-orange-600 dark:bg-orange-950/20 dark:text-orange-400',
+        yellow: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950/20 dark:text-yellow-400',
+        purple: 'bg-purple-50 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400',
     };
     return (
         <div className={`rounded-2xl p-4 text-center ${colors[color] ?? 'bg-gray-50'}`}>

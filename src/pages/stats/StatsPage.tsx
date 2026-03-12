@@ -183,7 +183,7 @@ export function StatsPage() {
     const insights = calcInsights(stats);
 
     return (
-        <div className="flex-1 overflow-y-auto pb-28">
+        <div className="flex-1 overflow-y-auto pb-28 bg-surface-2 transition-colors duration-300">
             {/* Hero */}
             <div className="bg-gradient-to-br from-brand-500 to-indigo-600 px-5 pt-8 pb-8 text-white">
                 <h1 className="text-2xl font-extrabold mb-1">내 성장 통계 📈</h1>
@@ -207,21 +207,21 @@ export function StatsPage() {
             <div className="px-5 py-4 space-y-4">
                 {/* 인사이트 */}
                 {insights.length > 0 && (
-                    <div className="bg-amber-50 rounded-2xl p-4 space-y-2.5 border border-amber-100">
-                        <p className="font-bold text-amber-800 text-sm">💡 이번 주 인사이트</p>
+                    <div className="bg-amber-50 dark:bg-amber-950/20 rounded-2xl p-4 space-y-2.5 border border-amber-100 dark:border-amber-900/40 transition-colors">
+                        <p className="font-bold text-amber-800 dark:text-amber-400 text-sm">💡 이번 주 인사이트</p>
                         {insights.map((ins, i) => (
-                            <p key={i} className={`text-sm ${ins.type === 'praise' ? 'text-green-700' : 'text-amber-700'}`}>{ins.text}</p>
+                            <p key={i} className={`text-sm ${ins.type === 'praise' ? 'text-green-700 dark:text-green-400' : 'text-amber-700 dark:text-amber-300'}`}>{ins.text}</p>
                         ))}
                     </div>
                 )}
 
                 {/* 주간 목표 */}
-                <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm transition-colors">
                     <div className="flex items-center justify-between mb-3">
-                        <p className="font-bold text-gray-800 text-sm">이번 주 목표 달성</p>
+                        <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">이번 주 목표 달성</p>
                         <p className="text-xs text-gray-400">{stats.thisWeekCount} / {stats.weeklyGoal}회</p>
                     </div>
-                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden transition-colors">
                         <div className="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full transition-all duration-700"
                             style={{ width: `${stats.weeklyAchievementPct}%` }} />
                     </div>
@@ -235,16 +235,17 @@ export function StatsPage() {
                 </div>
 
                 {/* 역량 커버리지 */}
-                <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-                    <p className="font-bold text-gray-800 text-sm mb-3">역량 커버리지</p>
+                <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm transition-colors">
+                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm mb-3">역량 커버리지</p>
                     <div className="flex items-end gap-2 mb-3">
-                        <p className="text-3xl font-extrabold text-gray-900">{stats.competencyCoverage}</p>
+                        <p className="text-3xl font-extrabold text-gray-900 dark:text-white transition-colors">{stats.competencyCoverage}</p>
                         <p className="text-sm text-gray-400 pb-1">/ 8 역량</p>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                         {Object.values(COMPETENCY_MAP).map(comp => {
+                            const active = stats.topCompetencies.some(tc => tc.competencyKey === comp.key);
                             return (
-                                <span key={comp.key} className={`text-xs px-2.5 py-1 rounded-full font-medium ${stats.competencyCoverage > 0 ? 'bg-brand-50 text-brand-600' : 'bg-gray-100 text-gray-400'}`}>
+                                <span key={comp.key} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${active ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}`}>
                                     {comp.icon} {comp.label}
                                 </span>
                             );
@@ -253,8 +254,8 @@ export function StatsPage() {
                 </div>
 
                 {/* 모멘텀 */}
-                <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-                    <p className="font-bold text-gray-800 text-sm mb-3">모멘텀 비교 <span className="text-xs text-gray-400 font-normal">(최근 7일 vs 그 전 7일)</span></p>
+                <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm transition-colors">
+                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm mb-3">모멘텀 비교 <span className="text-xs text-gray-400 font-normal">(최근 7일 vs 그 전 7일)</span></p>
                     <div className="grid grid-cols-2 gap-4">
                         <MomentumItem label="기록 수" recent={stats.recent7Count} prev={stats.prev7Count} unit="회" />
                         <MomentumItem label="획득 XP" recent={stats.recent7XP} prev={stats.prev7XP} unit="XP" />
@@ -262,23 +263,23 @@ export function StatsPage() {
                 </div>
 
                 {/* 카테고리 다양성 */}
-                <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm transition-colors">
                     <div className="flex items-center justify-between">
-                        <p className="font-bold text-gray-800 text-sm">카테고리 다양성</p>
-                        <p className="text-2xl font-extrabold text-indigo-600">{stats.distinctCategories30}종</p>
+                        <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">카테고리 다양성</p>
+                        <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{stats.distinctCategories30}종</p>
                     </div>
                     <p className="text-xs text-gray-400 mt-1">최근 30일 기준 서로 다른 카테고리</p>
-                    <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden transition-colors">
                         <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${Math.min(100, (stats.distinctCategories30 / 9) * 100)}%` }} />
                     </div>
                 </div>
 
                 {/* 커리어 코칭 지표 */}
                 {stats.totalRecords >= 5 ? (
-                    <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm mb-4">
+                    <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm mb-4 transition-colors">
                         <div className="flex items-center justify-between mb-4">
-                            <p className="font-bold text-gray-800 text-sm flex items-center gap-1.5"><span className="text-brand-500">🎯</span> 나의 강점 분석 (Top 3)</p>
-                            <span className="bg-brand-50 text-brand-600 text-[10px] px-2 py-0.5 rounded-full font-bold">진로/코칭</span>
+                            <p className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-1.5"><span className="text-brand-500">🎯</span> 나의 강점 분석 (Top 3)</p>
+                            <span className="bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 text-[10px] px-2 py-0.5 rounded-full font-bold">진로/코칭</span>
                         </div>
 
                         <div className="space-y-4">
@@ -287,10 +288,10 @@ export function StatsPage() {
                                 <div className="space-y-2">
                                     {stats.topCategories.map((item, idx) => (
                                         <div key={item.category} className="flex items-center gap-2">
-                                            <span className="text-sm font-bold w-4 text-gray-300">{idx + 1}</span>
-                                            <div className="flex-1 bg-gray-50 rounded-lg px-3 py-2 flex items-center justify-between">
-                                                <span className="text-sm font-semibold text-gray-700">{CATEGORIES[item.category]?.icon} {CATEGORIES[item.category]?.label}</span>
-                                                <span className="text-xs text-brand-600 font-bold">{item.count}회</span>
+                                            <span className="text-sm font-bold w-4 text-gray-300 dark:text-gray-600">{idx + 1}</span>
+                                            <div className="flex-1 bg-gray-50 dark:bg-gray-800/60 rounded-lg px-3 py-2 flex items-center justify-between transition-colors">
+                                                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{CATEGORIES[item.category]?.icon} {CATEGORIES[item.category]?.label}</span>
+                                                <span className="text-xs text-brand-600 dark:text-brand-400 font-bold">{item.count}회</span>
                                             </div>
                                         </div>
                                     ))}
@@ -303,10 +304,10 @@ export function StatsPage() {
                                     <div className="space-y-2">
                                         {stats.topCompetencies.map((item, idx) => (
                                             <div key={item.competencyKey} className="flex items-center gap-2">
-                                                <span className="text-sm font-bold w-4 text-gray-300">{idx + 1}</span>
-                                                <div className="flex-1 bg-gray-50 rounded-lg px-3 py-2 flex items-center justify-between">
-                                                    <span className="text-sm font-semibold text-gray-700">{COMPETENCY_MAP[item.competencyKey]?.icon} {COMPETENCY_MAP[item.competencyKey]?.label}</span>
-                                                    <span className="text-xs text-brand-600 font-bold">{item.count}회</span>
+                                                <span className="text-sm font-bold w-4 text-gray-300 dark:text-gray-600">{idx + 1}</span>
+                                                <div className="flex-1 bg-gray-50 dark:bg-gray-800/60 rounded-lg px-3 py-2 flex items-center justify-between transition-colors">
+                                                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{COMPETENCY_MAP[item.competencyKey]?.icon} {COMPETENCY_MAP[item.competencyKey]?.label}</span>
+                                                    <span className="text-xs text-brand-600 dark:text-brand-400 font-bold">{item.count}회</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -318,9 +319,9 @@ export function StatsPage() {
 
                             {/* 페르소나 코칭 결과 */}
                             {stats.topCategories.length > 0 && stats.topCompetencies.length > 0 && (
-                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                <div className="mt-4 pt-4 border-t border-border transition-colors">
                                     <p className="text-xs text-brand-500 font-bold mb-2">AI 기반 커리어 페르소나 🤖</p>
-                                    <div className="bg-gradient-to-br from-indigo-50 to-brand-50 rounded-xl p-4 border border-indigo-100/50">
+                                    <div className="bg-gradient-to-br from-indigo-50 to-brand-50 dark:from-indigo-950/30 dark:to-brand-950/30 rounded-xl p-4 border border-indigo-100/50 dark:border-indigo-900/40">
                                         {(() => {
                                             const persona = getPersona(
                                                 stats.topCategories.map(c => c.category),
@@ -330,11 +331,11 @@ export function StatsPage() {
                                                 <>
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <span className="text-2xl">{persona.icon}</span>
-                                                        <span className="font-extrabold text-gray-900 text-lg">{persona.name}</span>
+                                                        <span className="font-extrabold text-gray-900 dark:text-white text-lg">{persona.name}</span>
                                                     </div>
-                                                    <p className="text-sm text-gray-700 leading-relaxed font-medium">"{persona.message}"</p>
-                                                    <p className="text-xs text-gray-500 mt-2 mt-3 p-2 bg-white/60 rounded-lg">
-                                                        👉 <span className="font-semibold text-indigo-700">{persona.action}</span>
+                                                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">"{persona.message}"</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 mt-3 p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                                        👉 <span className="font-semibold text-indigo-700 dark:text-indigo-400">{persona.action}</span>
                                                     </p>
                                                 </>
                                             );
@@ -364,10 +365,10 @@ function RatioCard({ label, value, count, total, color, icon }: { label: string;
     const colorMap = { blue: 'from-blue-400 to-blue-600', orange: 'from-orange-400 to-orange-500' };
     const textMap = { blue: 'text-blue-600', orange: 'text-orange-500' };
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+        <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm transition-colors">
             <p className="text-xs text-gray-500 mb-2">{icon} {label}</p>
             <p className={`text-2xl font-extrabold ${textMap[color]} mb-2`}>{pct}%</p>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden transition-colors">
                 <div className={`h-full bg-gradient-to-r ${colorMap[color]} rounded-full`} style={{ width: `${pct}%` }} />
             </div>
             <p className="text-xs text-gray-400 mt-1.5">{count} / {total}건</p>
@@ -380,7 +381,7 @@ function MomentumItem({ label, recent, prev, unit }: { label: string; recent: nu
     return (
         <div>
             <p className="text-xs text-gray-400 mb-1">{label}</p>
-            <p className="text-xl font-extrabold text-gray-900">{recent}<span className="text-xs text-gray-400 ml-1">{unit}</span></p>
+            <p className="text-xl font-extrabold text-gray-900 dark:text-white transition-colors">{recent}<span className="text-xs text-gray-400 ml-1">{unit}</span></p>
             <div className="flex items-center gap-1 mt-0.5">
                 {delta > 0 ? <span className="text-green-500">📈</span> : delta < 0 ? <span className="text-red-400">📉</span> : <span className="text-gray-400">−</span>}
                 <span className={`text-xs font-semibold ${delta > 0 ? 'text-green-500' : delta < 0 ? 'text-red-400' : 'text-gray-400'}`}>
