@@ -3,16 +3,16 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
-import { useUIStore, FontSize } from '@/store/uiStore';
+import { useUIStore, FontSize, Theme } from '@/store/uiStore';
 import { downloadJSON } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { getLevelFromXP } from '@/types';
-import { LogOut, Download, ChevronRight, User, Target, Star, Shield, Trash2, FileText } from 'lucide-react';
+import { LogOut, Download, ChevronRight, User, Target, Star, Shield, Trash2, FileText, Moon, Sun } from 'lucide-react';
 
 export function SettingsPage() {
     const navigate = useNavigate();
     const { user, profile, totalXP, signOut, dominantCategory } = useAuthStore();
-    const { fontSize, setFontSize } = useUIStore();
+    const { fontSize, setFontSize, theme, setTheme } = useUIStore();
     const [exporting, setExporting] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
@@ -106,29 +106,59 @@ export function SettingsPage() {
                 {/* Display Preferences */}
                 <div>
                     <h2 className="text-sm font-bold text-gray-400 mb-2 px-2 uppercase tracking-wider">화면 설정</h2>
-                    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm p-5">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center">
-                                <Star size={18} className="text-brand-500" />
+                    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm p-5 space-y-6">
+                        {/* Font Size */}
+                        <div>
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center">
+                                    <Star size={18} className="text-brand-500" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-gray-800 text-sm">글자 크기</p>
+                                    <p className="text-xs text-gray-400">채팅 및 기록의 글자 크기를 조절합니다</p>
+                                </div>
                             </div>
-                            <div className="flex-1">
-                                <p className="font-semibold text-gray-800 text-sm">글자 크기</p>
-                                <p className="text-xs text-gray-400">채팅 및 기록의 글자 크기를 조절합니다</p>
+                            <div className="flex gap-2 p-1 bg-gray-50 rounded-xl">
+                                {(['small', 'medium', 'large'] as FontSize[]).map((size) => (
+                                    <button
+                                        key={size}
+                                        onClick={() => setFontSize(size)}
+                                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${fontSize === size
+                                            ? 'bg-white shadow-sm text-brand-600'
+                                            : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                    >
+                                        {size === 'small' ? '작게' : size === 'medium' ? '보통' : '크게'}
+                                    </button>
+                                ))}
                             </div>
                         </div>
-                        <div className="flex gap-2 p-1 bg-gray-50 rounded-xl">
-                            {(['small', 'medium', 'large'] as FontSize[]).map((size) => (
-                                <button
-                                    key={size}
-                                    onClick={() => setFontSize(size)}
-                                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${fontSize === size
-                                        ? 'bg-white shadow-sm text-brand-600'
-                                        : 'text-gray-400 hover:text-gray-600'
-                                        }`}
-                                >
-                                    {size === 'small' ? '작게' : size === 'medium' ? '보통' : '크게'}
-                                </button>
-                            ))}
+
+                        {/* Theme */}
+                        <div>
+                            <div className="flex items-center gap-4 mb-4 pt-4 border-t border-gray-50">
+                                <div className="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center">
+                                    {theme === 'dark' ? <Moon size={18} className="text-brand-500" /> : <Sun size={18} className="text-brand-500" />}
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-gray-800 text-sm">페이지 색상</p>
+                                    <p className="text-xs text-gray-400">앱의 서비스 테마를 변경합니다</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 p-1 bg-gray-50 rounded-xl">
+                                {(['light', 'dark'] as Theme[]).map((t) => (
+                                    <button
+                                        key={t}
+                                        onClick={() => setTheme(t)}
+                                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${theme === t
+                                            ? 'bg-white shadow-sm text-brand-600'
+                                            : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                    >
+                                        {t === 'light' ? '화이트모드' : '다크모드'}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -501,10 +501,18 @@ export function QuestPage() {
                     {/* Input area - Strictly Ultra-Compact */}
                     <div className="flex-shrink-0 px-3 pb-3 border-t border-brand-50 pt-2 bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
                         {step.examples && (
-                            <div className="flex flex-nowrap overflow-x-auto gap-1.5 mb-2 no-scrollbar px-1">
+                            <div
+                                className="flex gap-2 mb-2 no-scrollbar px-1"
+                                style={{
+                                    flexWrap: 'nowrap',
+                                    overflowX: 'auto',
+                                    WebkitOverflowScrolling: 'touch',
+                                    display: 'flex'
+                                }}
+                            >
                                 {step.examples.map(ex => (
                                     <button key={ex} onClick={() => appendExample(ex)}
-                                        className="whitespace-nowrap text-[10px] font-extrabold bg-brand-50/50 text-brand-600 px-2.5 py-1.5 rounded-full border border-brand-100 active:scale-90 transition-all flex-shrink-0">
+                                        className="whitespace-nowrap text-[10px] font-extrabold bg-brand-50/50 text-brand-600 px-3 py-1.5 rounded-full border border-brand-100 active:scale-90 transition-all flex-shrink-0">
                                         {ex}
                                     </button>
                                 ))}
@@ -522,12 +530,15 @@ export function QuestPage() {
                                 rows={1}
                                 style={{
                                     fontSize: '16px',
+                                    height: '40px',
                                     minHeight: '40px',
                                     maxHeight: '80px',
-                                    lineHeight: '1.2'
+                                    lineHeight: '1.2',
+                                    paddingTop: '10px',
+                                    paddingBottom: '10px'
                                 }}
                                 className={cn(
-                                    "flex-1 px-3 py-2 rounded-xl border-2 border-gray-100 text-gray-900 placeholder-gray-300 resize-none focus:outline-none focus:border-brand-400 transition-all bg-gray-50/30",
+                                    "flex-1 px-3 rounded-xl border-2 border-gray-100 text-gray-900 placeholder-gray-300 resize-none focus:outline-none focus:border-brand-400 transition-all bg-gray-50/30",
                                 )}
                             />
                             <Button

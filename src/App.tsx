@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
 import { Layout } from '@/components/layout/Layout';
 
 // Auth pages
@@ -23,6 +24,13 @@ function AppRouter() {
   useEffect(() => {
     initialize();
   }, []);
+
+  // Theme Sync
+  const { theme } = useUIStore();
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.setAttribute('data-theme', theme);
+  }, [theme]);
 
   if (!initialized || loading) {
     return (
