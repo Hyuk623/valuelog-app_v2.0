@@ -106,18 +106,18 @@ export function StatsPage() {
             const allExpsList = allExps ?? [];
             const allCompsList = allComps ?? [];
 
-            const exps30List = allExpsList.filter((e: any) => e.local_date >= date30);
+            const exps30List = allExpsList.filter((e: { local_date: string }) => e.local_date >= date30);
             const total30 = exps30List.length;
-            const evidence30 = exps30List.filter((e: any) => e.trust_label && e.trust_label !== 'self').length;
-            const impact30 = exps30List.filter((e: any) => e.impact_signal !== null).length;
-            const distinctCats30 = new Set(exps30List.map((e: any) => e.category)).size;
+            const evidence30 = exps30List.filter((e: { trust_label: string }) => e.trust_label && e.trust_label !== 'self').length;
+            const impact30 = exps30List.filter((e: { impact_signal: unknown }) => e.impact_signal !== null).length;
+            const distinctCats30 = new Set(exps30List.map((e: { category: string }) => e.category)).size;
 
             // 30 day distinct competencies
-            const exps30Ids = new Set(exps30List.map((e: any) => e.id));
-            const distinctComps = new Set(allCompsList.filter((c: any) => exps30Ids.has(c.experience_id)).map((c: any) => c.competency_key)).size;
+            const exps30Ids = new Set(exps30List.map((e: { id: string }) => e.id));
+            const distinctComps = new Set(allCompsList.filter((c: { experience_id: string }) => exps30Ids.has(c.experience_id)).map((c: { competency_key: string }) => c.competency_key)).size;
 
             // Career Coaching Stats (All-time)
-            const catCounts = allExpsList.reduce<Record<string, number>>((acc, e) => {
+            const catCounts = (allExpsList as { category: string }[]).reduce<Record<string, number>>((acc, e) => {
                 acc[e.category] = (acc[e.category] || 0) + 1;
                 return acc;
             }, {});
@@ -126,7 +126,7 @@ export function StatsPage() {
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 3);
 
-            const compCounts = allCompsList.reduce<Record<string, number>>((acc, c) => {
+            const compCounts = allCompsList.reduce<Record<string, number>>((acc, c: { competency_key: string }) => {
                 acc[c.competency_key] = (acc[c.competency_key] || 0) + 1;
                 return acc;
             }, {});
@@ -208,9 +208,9 @@ export function StatsPage() {
                 {/* 인사이트 */}
                 {insights.length > 0 && (
                     <div className="bg-amber-50 dark:bg-amber-950/20 rounded-2xl p-4 space-y-2.5 border border-amber-100 dark:border-amber-900/40 transition-colors">
-                        <p className="font-bold text-amber-800 dark:text-amber-400 text-sm">💡 이번 주 인사이트</p>
+                        <p className="font-bold text-amber-800 dark:text-amber-400 text-sm transition-colors">💡 이번 주 인사이트</p>
                         {insights.map((ins, i) => (
-                            <p key={i} className={`text-sm ${ins.type === 'praise' ? 'text-green-700 dark:text-green-400' : 'text-amber-700 dark:text-amber-300'}`}>{ins.text}</p>
+                            <p key={i} className={`text-sm transition-colors ${ins.type === 'praise' ? 'text-green-700 dark:text-green-400' : 'text-amber-700 dark:text-amber-300'}`}>{ins.text}</p>
                         ))}
                     </div>
                 )}
@@ -218,8 +218,8 @@ export function StatsPage() {
                 {/* 주간 목표 */}
                 <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm transition-colors">
                     <div className="flex items-center justify-between mb-3">
-                        <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">이번 주 목표 달성</p>
-                        <p className="text-xs text-gray-400">{stats.thisWeekCount} / {stats.weeklyGoal}회</p>
+                        <p className="font-bold text-gray-800 dark:text-gray-100 text-sm transition-colors">이번 주 목표 달성</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 transition-colors">{stats.thisWeekCount} / {stats.weeklyGoal}회</p>
                     </div>
                     <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden transition-colors">
                         <div className="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full transition-all duration-700"
@@ -238,8 +238,8 @@ export function StatsPage() {
                 <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm transition-colors">
                     <p className="font-bold text-gray-800 dark:text-gray-100 text-sm mb-3">역량 커버리지</p>
                     <div className="flex items-end gap-2 mb-3">
-                        <p className="text-3xl font-extrabold text-gray-900 dark:text-white transition-colors">{stats.competencyCoverage}</p>
-                        <p className="text-sm text-gray-400 pb-1">/ 8 역량</p>
+                        <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 transition-colors">{stats.competencyCoverage}</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 pb-1 transition-colors">/ 8 역량</p>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                         {Object.values(COMPETENCY_MAP).map(comp => {
@@ -265,10 +265,10 @@ export function StatsPage() {
                 {/* 카테고리 다양성 */}
                 <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm transition-colors">
                     <div className="flex items-center justify-between">
-                        <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">카테고리 다양성</p>
-                        <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{stats.distinctCategories30}종</p>
+                        <p className="font-bold text-gray-800 dark:text-gray-100 text-sm transition-colors">카테고리 다양성</p>
+                        <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 transition-colors">{stats.distinctCategories30}종</p>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">최근 30일 기준 서로 다른 카테고리</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 transition-colors">최근 30일 기준 서로 다른 카테고리</p>
                     <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden transition-colors">
                         <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${Math.min(100, (stats.distinctCategories30 / 9) * 100)}%` }} />
                     </div>
@@ -278,8 +278,8 @@ export function StatsPage() {
                 {stats.totalRecords >= 5 ? (
                     <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm mb-4 transition-colors">
                         <div className="flex items-center justify-between mb-4">
-                            <p className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-1.5"><span className="text-brand-500">🎯</span> 나의 강점 분석 (Top 3)</p>
-                            <span className="bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 text-[10px] px-2 py-0.5 rounded-full font-bold">진로/코칭</span>
+                            <p className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-1.5 transition-colors"><span className="text-brand-500">🎯</span> 나의 강점 분석 (Top 3)</p>
+                            <span className="bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors">진로/코칭</span>
                         </div>
 
                         <div className="space-y-4">
@@ -288,8 +288,8 @@ export function StatsPage() {
                                 <div className="space-y-2">
                                     {stats.topCategories.map((item, idx) => (
                                         <div key={item.category} className="flex items-center gap-2">
-                                            <span className="text-sm font-bold w-4 text-gray-300 dark:text-gray-600">{idx + 1}</span>
-                                            <div className="flex-1 bg-gray-50 dark:bg-gray-800/60 rounded-lg px-3 py-2 flex items-center justify-between transition-colors">
+                                            <span className="text-sm font-bold w-4 text-gray-300 dark:text-gray-700 transition-colors">{idx + 1}</span>
+                                            <div className="flex-1 bg-surface-2 dark:bg-gray-800/60 rounded-lg px-3 py-2 flex items-center justify-between border border-border transition-colors">
                                                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{CATEGORIES[item.category]?.icon} {CATEGORIES[item.category]?.label}</span>
                                                 <span className="text-xs text-brand-600 dark:text-brand-400 font-bold">{item.count}회</span>
                                             </div>
@@ -304,8 +304,8 @@ export function StatsPage() {
                                     <div className="space-y-2">
                                         {stats.topCompetencies.map((item, idx) => (
                                             <div key={item.competencyKey} className="flex items-center gap-2">
-                                                <span className="text-sm font-bold w-4 text-gray-300 dark:text-gray-600">{idx + 1}</span>
-                                                <div className="flex-1 bg-gray-50 dark:bg-gray-800/60 rounded-lg px-3 py-2 flex items-center justify-between transition-colors">
+                                                <span className="text-sm font-bold w-4 text-gray-300 dark:text-gray-700 transition-colors">{idx + 1}</span>
+                                                <div className="flex-1 bg-surface-2 dark:bg-gray-800/60 rounded-lg px-3 py-2 flex items-center justify-between border border-border transition-colors">
                                                     <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{COMPETENCY_MAP[item.competencyKey]?.icon} {COMPETENCY_MAP[item.competencyKey]?.label}</span>
                                                     <span className="text-xs text-brand-600 dark:text-brand-400 font-bold">{item.count}회</span>
                                                 </div>
@@ -321,7 +321,7 @@ export function StatsPage() {
                             {stats.topCategories.length > 0 && stats.topCompetencies.length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-border transition-colors">
                                     <p className="text-xs text-brand-500 font-bold mb-2">AI 기반 커리어 페르소나 🤖</p>
-                                    <div className="bg-gradient-to-br from-indigo-50 to-brand-50 dark:from-indigo-950/30 dark:to-brand-950/30 rounded-xl p-4 border border-indigo-100/50 dark:border-indigo-900/40">
+                                    <div className="bg-gradient-to-br from-indigo-50/80 to-brand-50/80 dark:from-indigo-950/40 dark:to-brand-950/40 rounded-2xl p-5 border border-indigo-100/50 dark:border-indigo-900/40 shadow-sm transition-colors">
                                         {(() => {
                                             const persona = getPersona(
                                                 stats.topCategories.map(c => c.category),
@@ -329,14 +329,24 @@ export function StatsPage() {
                                             );
                                             return (
                                                 <>
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-2xl">{persona.icon}</span>
-                                                        <span className="font-extrabold text-gray-900 dark:text-white text-lg">{persona.name}</span>
+                                                    <div className="flex items-center gap-3 mb-3">
+                                                        <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-3xl shadow-sm border border-indigo-100 dark:border-indigo-900/40 transition-colors">
+                                                            {persona.icon}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-black uppercase tracking-widest mb-0.5">Your Persona</p>
+                                                            <p className="font-extrabold text-gray-900 dark:text-gray-100 text-lg transition-colors">{persona.name}</p>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">"{persona.message}"</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 mt-3 p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                                                        👉 <span className="font-semibold text-indigo-700 dark:text-indigo-400">{persona.action}</span>
-                                                    </p>
+                                                    <div className="bg-white/60 dark:bg-gray-800/40 rounded-xl p-4 mb-4 border border-white/40 dark:border-gray-700/30 transition-colors">
+                                                        <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed font-medium">"{persona.message}"</p>
+                                                    </div>
+                                                    <div className="flex items-start gap-2 text-xs">
+                                                        <span className="flex-shrink-0 mt-0.5">👉</span>
+                                                        <p className="text-gray-600 dark:text-gray-400 font-semibold leading-snug">
+                                                            <span className="text-indigo-700 dark:text-indigo-400 font-bold">{persona.action}</span>
+                                                        </p>
+                                                    </div>
                                                 </>
                                             );
                                         })()}
@@ -346,11 +356,11 @@ export function StatsPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm mb-4 text-center">
-                        <img src="/favicon.svg?v=2" alt="Lock" className="w-12 h-12 mx-auto mb-3 opacity-60 grayscale shadow-sm rounded-full bg-white" />
-                        <p className="font-bold text-gray-800 text-sm mb-1.5">성과 분석 준비 중</p>
-                        <p className="text-xs text-gray-500 leading-relaxed">기록이 5개 이상 쌓이면 커리어 코칭을 위한<br />나만의 강점 분석이 시작됩니다! ({stats.totalRecords}/5)</p>
-                        <div className="mt-4 h-1.5 bg-gray-100 rounded-full max-w-[120px] mx-auto overflow-hidden">
+                    <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm mb-4 text-center transition-colors">
+                        <img src="/favicon.svg?v=2" alt="Lock" className="w-12 h-12 mx-auto mb-3 opacity-60 grayscale shadow-sm rounded-full bg-surface" />
+                        <p className="font-bold text-gray-800 dark:text-gray-200 text-sm mb-1.5 transition-colors">성과 분석 준비 중</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed transition-colors">기록이 5개 이상 쌓이면 커리어 코칭을 위한<br />나만의 강점 분석이 시작됩니다! ({stats.totalRecords}/5)</p>
+                        <div className="mt-4 h-1.5 bg-surface-2 dark:bg-gray-800 rounded-full max-w-[120px] mx-auto overflow-hidden transition-colors">
                             <div className="h-full bg-brand-400 rounded-full" style={{ width: `${(stats.totalRecords / 5) * 100}%` }} />
                         </div>
                     </div>
@@ -371,7 +381,7 @@ function RatioCard({ label, value, count, total, color, icon }: { label: string;
             <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden transition-colors">
                 <div className={`h-full bg-gradient-to-r ${colorMap[color]} rounded-full`} style={{ width: `${pct}%` }} />
             </div>
-            <p className="text-xs text-gray-400 mt-1.5">{count} / {total}건</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 transition-colors">{count} / {total}건</p>
         </div>
     );
 }
@@ -380,8 +390,8 @@ function MomentumItem({ label, recent, prev, unit }: { label: string; recent: nu
     const delta = recent - prev;
     return (
         <div>
-            <p className="text-xs text-gray-400 mb-1">{label}</p>
-            <p className="text-xl font-extrabold text-gray-900 dark:text-white transition-colors">{recent}<span className="text-xs text-gray-400 ml-1">{unit}</span></p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 transition-colors">{label}</p>
+            <p className="text-xl font-extrabold text-gray-900 dark:text-gray-100 transition-colors">{recent}<span className="text-xs text-gray-400 dark:text-gray-500 ml-1">{unit}</span></p>
             <div className="flex items-center gap-1 mt-0.5">
                 {delta > 0 ? <span className="text-green-500">📈</span> : delta < 0 ? <span className="text-red-400">📉</span> : <span className="text-gray-400">−</span>}
                 <span className={`text-xs font-semibold ${delta > 0 ? 'text-green-500' : delta < 0 ? 'text-red-400' : 'text-gray-400'}`}>

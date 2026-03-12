@@ -295,21 +295,21 @@ const PERSONAS: Persona[] = [
 ];
 
 export function getPersona(categories: string[], competencies: string[]): Persona {
-    let scores = { creator: 0, strategist: 0, leader: 0, doer: 0 };
+    const scores = { creator: 0, strategist: 0, leader: 0, doer: 0 };
 
     // 가중치 계산
     categories.forEach(cat => {
         if (cat === 'creative' || cat === 'project') scores.creator += 2;
-        if (cat === 'study' || cat === 'work') scores.strategist += 2;
-        if (cat === 'social' || cat === 'volunteer') scores.leader += 2;
-        if (cat === 'exercise' || cat === 'experience') scores.doer += 2;
+        else if (cat === 'study' || cat === 'work') scores.strategist += 2;
+        else if (cat === 'social' || cat === 'volunteer') scores.leader += 2;
+        else if (cat === 'exercise' || cat === 'experience') scores.doer += 2;
     });
 
     competencies.forEach(comp => {
         if (comp === 'problem_solving') scores.creator += 2;
-        if (comp === 'planning' || comp === 'learning') scores.strategist += 2;
-        if (comp === 'communication' || comp === 'collaboration') scores.leader += 2;
-        if (comp === 'execution' || comp === 'ownership') scores.doer += 2;
+        else if (comp === 'planning' || comp === 'learning') scores.strategist += 2;
+        else if (comp === 'communication' || comp === 'collaboration') scores.leader += 2;
+        else if (comp === 'execution' || comp === 'ownership') scores.doer += 2;
     });
 
     // 최고 점수 페르소나 찾기, 동점일 경우 creator 기본값
