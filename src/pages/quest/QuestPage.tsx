@@ -118,19 +118,18 @@ export function QuestPage() {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    // VisualViewport API: iOS Safari and Android keyboard handling
-    // When the software keyboard appears on mobile, it shrinks the visual viewport.
-    // We dynamically set the container's height/top to match the visible area.
+    // VisualViewport API: iOS/Android keyboard handling.
+    // Only update HEIGHT — changing top/left causes the container to drop below screen
+    // when iOS auto-scrolls the page to reveal the focused input.
     useEffect(() => {
         if (stage !== 'answering') return;
 
         const applyViewport = () => {
             const vv = window.visualViewport;
             if (!vv || !chatContainerRef.current) return;
+            // Only shrink height to match the visible area above the keyboard.
+            // Keep top:0, left:0 so the header stays at the top.
             chatContainerRef.current.style.height = `${vv.height}px`;
-            chatContainerRef.current.style.top = `${vv.offsetTop}px`;
-            chatContainerRef.current.style.left = `${vv.offsetLeft}px`;
-            chatContainerRef.current.style.width = `${vv.width}px`;
         };
 
         window.visualViewport?.addEventListener('resize', applyViewport);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
@@ -194,8 +195,8 @@ export function SettingsPage() {
                 <p className="text-center text-xs text-gray-300 py-10">ValueLog v2.0 · Firebase + Supabase</p>
             </div>
 
-            {/* Privacy Policy Modal */}
-            {showPrivacyPolicy && (
+            {/* Privacy Policy Modal - rendered via portal to clear BottomNav stacking context */}
+            {showPrivacyPolicy && createPortal(
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 animate-fade-in px-4">
                     <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl animate-slide-up max-h-[85vh] flex flex-col">
                         <div className="flex items-center gap-2 mb-4">
@@ -229,10 +230,10 @@ export function SettingsPage() {
                         </Button>
                     </div>
                 </div>
-            )}
+                , document.body)}
 
-            {/* Delete Confirm Modal */}
-            {showDeleteConfirm && (
+            {/* Delete Confirm Modal - rendered via portal */}
+            {showDeleteConfirm && createPortal(
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 animate-fade-in px-4">
                     <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl animate-slide-up">
                         <div className="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center mb-4 mx-auto">
@@ -249,11 +250,11 @@ export function SettingsPage() {
                         </div>
                     </div>
                 </div>
-            )}
+                , document.body)}
 
-            {/* Sign Out Confirm Modal */}
-            {showSignOutConfirm && (
-                <div className="fixed inset-0 bg-black/50 flex items-end z-[100] animate-fade-in">
+            {/* Sign Out Confirm Modal - rendered via portal above BottomNav */}
+            {showSignOutConfirm && createPortal(
+                <div className="fixed inset-0 bg-black/50 flex items-end animate-fade-in" style={{ zIndex: 9999 }}>
                     <div className="w-full max-w-[480px] mx-auto bg-white rounded-t-3xl p-6 animate-slide-up"
                         style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px) + 72px)' }}>
                         <h3 className="text-xl font-extrabold text-gray-900 mb-2">로그아웃 할까요?</h3>
@@ -264,7 +265,7 @@ export function SettingsPage() {
                         </div>
                     </div>
                 </div>
-            )}
+                , document.body)}
         </div>
     );
 }
