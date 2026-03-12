@@ -187,7 +187,26 @@ export function QuestPage() {
         setCurrentAnswer('');
     };
 
-    const appendExample = (ex: string) => { setCurrentAnswer(prev => prev ? `${prev}, ${ex}` : ex); textareaRef.current?.focus(); };
+    const appendExample = (ex: string) => {
+        setCurrentAnswer(prev => prev ? `${prev}, ${ex}` : ex);
+        textareaRef.current?.focus();
+        // Trigger height adjustment after state update
+        setTimeout(adjustTextareaHeight, 0);
+    };
+
+    const adjustTextareaHeight = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        textarea.style.height = '44px'; // Reset to base height to calculate correctly
+        const scrollHeight = textarea.scrollHeight;
+        // Limit max height to around 3 lines (approx 90px)
+        const maxHeight = 90;
+        textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    };
+
+    useEffect(() => {
+        adjustTextareaHeight();
+    }, [currentAnswer]);
 
     const handleNext = () => {
         if (!promptSet) return;
@@ -476,13 +495,13 @@ export function QuestPage() {
                         <div ref={chatEndRef} />
                     </div>
 
-                    {/* Input area - Refined and compact */}
-                    <div className="flex-shrink-0 px-4 pb-4 border-t border-gray-100 pt-3 bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+                    {/* Input area - Strictly refined and compact */}
+                    <div className="flex-shrink-0 px-4 pb-4 border-t border-gray-100 pt-3 bg-white shadow-[0_-8px_20px_rgba(0,0,0,0.04)]">
                         {step.examples && (
-                            <div className="flex overflow-x-auto gap-2 mb-3 no-scrollbar pb-1 px-1">
+                            <div className="flex flex-nowrap overflow-x-auto gap-2 mb-3 no-scrollbar pb-1 px-1 -mx-1">
                                 {step.examples.map(ex => (
                                     <button key={ex} onClick={() => appendExample(ex)}
-                                        className="whitespace-nowrap text-[11px] font-bold bg-brand-50 text-brand-600 px-3 py-1.5 rounded-full border border-brand-100 hover:bg-brand-100 transition-all flex-shrink-0">
+                                        className="whitespace-nowrap text-[11px] font-bold bg-brand-50 text-brand-600 px-3 py-1.5 rounded-full border border-brand-100 active:scale-95 transition-all flex-shrink-0">
                                         {ex}
                                     </button>
                                 ))}
@@ -492,19 +511,27 @@ export function QuestPage() {
                             <textarea
                                 ref={textareaRef}
                                 value={currentAnswer}
-                                onChange={e => setCurrentAnswer(e.target.value)}
+                                onChange={e => {
+                                    setCurrentAnswer(e.target.value);
+                                    adjustTextareaHeight();
+                                }}
                                 placeholder={step.placeholder}
                                 rows={1}
-                                style={{ fontSize: '16px', minHeight: '44px', maxHeight: '120px' }}
+                                style={{
+                                    fontSize: '16px',
+                                    minHeight: '44px',
+                                    maxHeight: '90px',
+                                    lineHeight: '1.4'
+                                }}
                                 className={cn(
-                                    "flex-1 px-4 py-2.5 rounded-2xl border-2 border-gray-100 text-gray-900 placeholder-gray-300 resize-none focus:outline-none focus:border-brand-400 transition-all bg-gray-50/50",
+                                    "flex-1 px-4 py-[10px] rounded-2xl border-2 border-gray-100 text-gray-900 placeholder-gray-300 resize-none focus:outline-none focus:border-brand-400 transition-colors bg-gray-50/50",
                                 )}
                             />
                             <Button
                                 onClick={handleNext}
                                 disabled={step.required && !currentAnswer.trim()}
                                 size="sm"
-                                className="h-11 w-12 rounded-2xl flex-shrink-0 p-0 flex items-center justify-center"
+                                className="h-11 w-11 rounded-full flex-shrink-0 p-0 flex items-center justify-center shadow-lg shadow-brand-200"
                             >
                                 <Plus size={20} className={currentStep < promptSet.steps.length - 1 ? "" : "rotate-45 transition-transform"} />
                             </Button>
@@ -512,7 +539,7 @@ export function QuestPage() {
                         {!step.required && (
                             <button
                                 onClick={handleNext}
-                                className="mt-2 w-full text-[11px] font-bold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-widest text-center"
+                                className="mt-2 w-full text-[10px] font-extrabold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-[0.2em] text-center"
                             >
                                 건너뛰기
                             </button>
