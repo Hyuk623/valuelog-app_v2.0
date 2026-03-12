@@ -116,6 +116,32 @@ export function QuestPage() {
 
     const { fontSize } = useUIStore();
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
+
+    // VisualViewport API: iOS Safari and Android keyboard handling
+    // When the software keyboard appears on mobile, it shrinks the visual viewport.
+    // We dynamically set the container's height/top to match the visible area.
+    useEffect(() => {
+        if (stage !== 'answering') return;
+
+        const applyViewport = () => {
+            const vv = window.visualViewport;
+            if (!vv || !chatContainerRef.current) return;
+            chatContainerRef.current.style.height = `${vv.height}px`;
+            chatContainerRef.current.style.top = `${vv.offsetTop}px`;
+            chatContainerRef.current.style.left = `${vv.offsetLeft}px`;
+            chatContainerRef.current.style.width = `${vv.width}px`;
+        };
+
+        window.visualViewport?.addEventListener('resize', applyViewport);
+        window.visualViewport?.addEventListener('scroll', applyViewport);
+        applyViewport();
+
+        return () => {
+            window.visualViewport?.removeEventListener('resize', applyViewport);
+            window.visualViewport?.removeEventListener('scroll', applyViewport);
+        };
+    }, [stage]);
 
     const getFontSizeClass = (base: string) => {
         if (fontSize === 'small') return 'text-xs';
@@ -393,6 +419,7 @@ export function QuestPage() {
             {/* ── Answering ── KakaoTalk-style: fixed screen, scrollable chat, pinned input */}
             {stage === 'answering' && promptSet && step && (
                 <div
+                    ref={chatContainerRef}
                     className="flex flex-col"
                     style={{
                         position: 'fixed',
