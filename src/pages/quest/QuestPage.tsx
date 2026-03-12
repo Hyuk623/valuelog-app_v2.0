@@ -430,24 +430,24 @@ export function QuestPage() {
                         background: '#fff',
                     }}
                 >
-                    {/* Header inside fixed container */}
-                    <div className="px-5 pt-12 pb-4 flex items-center gap-3 border-b border-gray-100 flex-shrink-0">
-                        <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-gray-100">
-                            <X size={22} className="text-gray-500" />
+                    {/* Header inside fixed container - Compact */}
+                    <div className="px-5 pt-10 pb-3 flex items-center gap-3 border-b border-gray-50 flex-shrink-0">
+                        <button onClick={() => navigate(-1)} className="p-1.5 rounded-xl hover:bg-gray-100">
+                            <X size={20} className="text-gray-500" />
                         </button>
-                        <p className={cn("font-semibold text-brand-500", getFontSizeClass('text-sm'))}>
+                        <p className={cn("font-bold text-brand-500", getFontSizeClass('text-sm'))}>
                             {catInfo.icon} {catInfo.label}
                         </p>
                     </div>
 
-                    {/* Progress bar */}
-                    <div className="px-5 pt-3 pb-1 flex-shrink-0">
+                    {/* Progress bar - Tightened */}
+                    <div className="px-5 pt-2 pb-1 flex-shrink-0">
                         <div className="flex gap-1.5 mb-1">
                             {promptSet.steps.map((_, i) => (
-                                <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i < currentStep ? 'bg-brand-500' : i === currentStep ? 'bg-brand-300' : 'bg-gray-200'}`} />
+                                <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-500 ${i < currentStep ? 'bg-brand-500' : i === currentStep ? 'bg-brand-300' : 'bg-gray-200'}`} />
                             ))}
                         </div>
-                        <p className="text-xs text-gray-400 text-right">{currentStep + 1} / {promptSet.steps.length}</p>
+                        <p className="text-[10px] font-bold text-gray-400 text-right uppercase tracking-tighter">{currentStep + 1} / {promptSet.steps.length}</p>
                     </div>
 
                     {/* Chat messages - scrollable */}
@@ -476,35 +476,47 @@ export function QuestPage() {
                         <div ref={chatEndRef} />
                     </div>
 
-                    {/* Input area - pinned to bottom */}
-                    <div className="flex-shrink-0 px-5 pb-6 border-t border-gray-100 pt-4 bg-white">
+                    {/* Input area - Refined and compact */}
+                    <div className="flex-shrink-0 px-4 pb-4 border-t border-gray-100 pt-3 bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
                         {step.examples && (
-                            <div className="flex flex-wrap gap-1.5 mb-3">
+                            <div className="flex overflow-x-auto gap-2 mb-3 no-scrollbar pb-1 px-1">
                                 {step.examples.map(ex => (
                                     <button key={ex} onClick={() => appendExample(ex)}
-                                        className="text-xs bg-brand-50 text-brand-600 px-3 py-1.5 rounded-full border border-brand-200 hover:bg-brand-100 transition-all">
+                                        className="whitespace-nowrap text-[11px] font-bold bg-brand-50 text-brand-600 px-3 py-1.5 rounded-full border border-brand-100 hover:bg-brand-100 transition-all flex-shrink-0">
                                         {ex}
                                     </button>
                                 ))}
                             </div>
                         )}
-                        <textarea
-                            ref={textareaRef}
-                            value={currentAnswer}
-                            onChange={e => setCurrentAnswer(e.target.value)}
-                            placeholder={step.placeholder}
-                            rows={3}
-                            style={{ fontSize: '16px' }}
-                            className={cn(
-                                "w-full px-4 py-3 rounded-2xl border-2 border-gray-200 text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-brand-400 transition-all",
-                            )}
-                        />
-                        <div className="flex gap-3 mt-3">
-                            {!step.required && <Button variant="secondary" onClick={handleNext} className="flex-1">건너뛰기</Button>}
-                            <Button onClick={handleNext} disabled={step.required && !currentAnswer.trim()} className="flex-1">
-                                {currentStep < promptSet.steps.length - 1 ? '다음 →' : '완료 →'}
+                        <div className="flex items-end gap-2">
+                            <textarea
+                                ref={textareaRef}
+                                value={currentAnswer}
+                                onChange={e => setCurrentAnswer(e.target.value)}
+                                placeholder={step.placeholder}
+                                rows={1}
+                                style={{ fontSize: '16px', minHeight: '44px', maxHeight: '120px' }}
+                                className={cn(
+                                    "flex-1 px-4 py-2.5 rounded-2xl border-2 border-gray-100 text-gray-900 placeholder-gray-300 resize-none focus:outline-none focus:border-brand-400 transition-all bg-gray-50/50",
+                                )}
+                            />
+                            <Button
+                                onClick={handleNext}
+                                disabled={step.required && !currentAnswer.trim()}
+                                size="sm"
+                                className="h-11 w-12 rounded-2xl flex-shrink-0 p-0 flex items-center justify-center"
+                            >
+                                <Plus size={20} className={currentStep < promptSet.steps.length - 1 ? "" : "rotate-45 transition-transform"} />
                             </Button>
                         </div>
+                        {!step.required && (
+                            <button
+                                onClick={handleNext}
+                                className="mt-2 w-full text-[11px] font-bold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-widest text-center"
+                            >
+                                건너뛰기
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
