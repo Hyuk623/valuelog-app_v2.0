@@ -3,7 +3,7 @@ import { BottomNav } from './BottomNav';
 
 export function Layout() {
     return (
-        <div className="flex flex-col h-full bg-white">
+        <div className="flex flex-col h-full bg-surface transition-colors">
             <main className="flex-1 overflow-y-auto pb-[calc(88px+env(safe-area-inset-bottom,0px))] md:pb-24">
                 <Outlet />
             </main>

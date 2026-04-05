@@ -266,3 +266,82 @@ a:active,
 .step-dot.completed {
   background: var(--color-brand-400);
 }
+
+/* ── Persona Card Dark Mode ── */
+[data-theme='dark'] .persona-card {
+  background-image: none;
+  background-color: rgba(49, 46, 129, 0.45);
+}
+
+[data-theme='dark'] .persona-quote-box {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+[data-theme='dark'] .persona-quote-box p {
+  color: #f1f5f9;
+}
+
+[data-theme='dark'] .persona-card p.font-extrabold {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .persona-action-text {
+  color: #c7d2fe;
+}
+
+/* ── Quest Chat Dark Mode ── */
+[data-theme='dark'] .quest-bubble {
+  background-color: rgba(30, 41, 59, 0.9);
+  /* slate-800 */
+  color: #e2e8f0;
+  /* bright light text */
+  border-color: rgba(71, 85, 105, 0.5);
+}
+
+[data-theme='dark'] .quest-question-bubble {
+  background-color: rgba(20, 83, 45, 0.35);
+  /* brand-950 */
+  color: #bbf7d0;
+  /* brand-200 - bright green-white */
+  border-color: rgba(34, 197, 94, 0.3);
+  /* brand-500/30 */
+}
+
+[data-theme='dark'] .quest-chip {
+  background-color: rgba(20, 83, 45, 0.4);
+  color: #86efac;
+  /* brand-300 - bright green */
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+/* ── Enrichment Competency Tab Dark Mode ── */
+[data-theme='dark'] .enrichment-comp-card {
+  background-color: rgba(30, 41, 59, 0.85);
+  border-color: rgba(71, 85, 105, 0.6);
+}
+
+[data-theme='dark'] .enrichment-comp-card.is-selected {
+  background-color: rgba(20, 83, 45, 0.3);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+[data-theme='dark'] .enrichment-comp-label {
+  color: #f1f5f9;
+}
+
+[data-theme='dark'] .enrichment-comp-desc {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .enrichment-comp-item {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .enrichment-comp-check {
+  color: #64748b;
+}
+
+[data-theme='dark'] .enrichment-comp-anchor {
+  color: #86efac;
+}

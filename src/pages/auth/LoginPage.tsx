@@ -72,18 +72,18 @@ export function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-gradient-to-b from-brand-50 to-white">
+        <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-gradient-to-b from-brand-50 to-surface dark:from-brand-950/20 dark:to-surface transition-colors duration-300">
             {/* Logo */}
             <div className="mb-10 text-center animate-fade-in flex flex-col items-center">
-                <img src="/favicon.svg?v=2" alt="ValueLog Logo" className="w-24 h-24 mb-6 shadow-md rounded-full bg-white" />
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">ValueLog</h1>
-                <p className="text-gray-500 mt-2 text-base">매일 성장을 기록하세요</p>
+                <img src="/favicon.svg?v=2" alt="ValueLog Logo" className="w-24 h-24 mb-6 shadow-md rounded-full bg-surface" />
+                <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight transition-colors">ValueLog</h1>
+                <p className="text-gray-500 dark:text-gray-400 mt-2 text-base transition-colors">매일 성장을 기록하세요</p>
             </div>
 
             {/* Card */}
             <div className="w-full max-w-sm animate-slide-up">
                 {/* Mode Tabs */}
-                <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 mb-6">
+                <div className="flex gap-1 bg-surface-2 dark:bg-gray-800 rounded-2xl p-1 mb-6 border border-border transition-colors">
                     {[
                         { key: 'login', label: '로그인' },
                         { key: 'signup', label: '회원가입' },
@@ -93,8 +93,8 @@ export function LoginPage() {
                             key={key}
                             onClick={() => { setMode(key as AuthMode); setMessage(null); }}
                             className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all duration-200 ${mode === key
-                                ? 'bg-white text-brand-600 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? 'bg-surface text-brand-600 dark:text-brand-400 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                                 }`}
                         >
                             {label}
@@ -104,20 +104,20 @@ export function LoginPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">이메일</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 transition-colors">이메일</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="your@email.com"
                             required
-                            className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition-all"
+                            className="w-full px-4 py-3 rounded-2xl border border-border dark:border-gray-700 bg-surface text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition-all"
                         />
                     </div>
 
                     {mode !== 'magic' && (
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">비밀번호</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 transition-colors">비밀번호</label>
                             <input
                                 type="password"
                                 value={password}
@@ -125,15 +125,15 @@ export function LoginPage() {
                                 placeholder={mode === 'signup' ? '8자 이상 입력' : '비밀번호 입력'}
                                 required
                                 minLength={mode === 'signup' ? 8 : undefined}
-                                className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition-all"
+                                className="w-full px-4 py-3 rounded-2xl border border-border dark:border-gray-700 bg-surface text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition-all"
                             />
                         </div>
                     )}
 
                     {message && (
-                        <div className={`p-4 rounded-2xl text-sm font-medium ${message.type === 'success'
-                            ? 'bg-brand-50 text-brand-700'
-                            : 'bg-red-50 text-red-700'
+                        <div className={`p-4 rounded-2xl text-sm font-medium transition-colors ${message.type === 'success'
+                            ? 'bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300'
+                            : 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300'
                             }`}>
                             {message.text}
                         </div>
@@ -157,15 +157,15 @@ export function LoginPage() {
                 )}
 
                 <div className="my-6 flex items-center">
-                    <div className="flex-1 border-t border-gray-200"></div>
-                    <span className="px-4 text-xs text-gray-400 font-medium">또는</span>
-                    <div className="flex-1 border-t border-gray-200"></div>
+                    <div className="flex-1 border-t border-border dark:border-gray-800"></div>
+                    <span className="px-4 text-xs text-gray-400 dark:text-gray-500 font-medium">또는</span>
+                    <div className="flex-1 border-t border-border dark:border-gray-800"></div>
                 </div>
 
                 <button
                     onClick={handleGoogleLogin}
                     disabled={loading}
-                    className="w-full flex justify-center items-center gap-2 px-4 py-3 rounded-2xl border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex justify-center items-center gap-2 px-4 py-3 rounded-2xl border border-border dark:border-gray-700 bg-surface text-gray-700 dark:text-gray-300 font-semibold hover:bg-surface-2 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

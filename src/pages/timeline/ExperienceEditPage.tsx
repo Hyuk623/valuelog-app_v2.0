@@ -46,8 +46,19 @@ export function ExperienceEditPage() {
     }, [id, user]);
 
     const handleSave = async () => {
-        if (!id || !user) return;
+        if (!id || !user || !experience) return;
         setSaving(true);
+
+        // Audit Log 생성 (Update 전 과거 스냅샷 저장)
+        const snapshot = {
+            title: experience.title,
+            answers: answers.map(a => ({ step_key: a.step_key, answer: a.answer }))
+        };
+        await supabase.from('experience_edit_logs').insert({
+            experience_id: id,
+            user_id: user.id,
+            snapshot
+        });
 
         // Update title
         await supabase.from('experiences').update({ title, updated_at: new Date().toISOString() }).eq('id', id).eq('user_id', user.id);
@@ -66,8 +77,8 @@ export function ExperienceEditPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col min-h-screen bg-white">
-                <div className="px-5 pt-12 pb-4 border-b border-gray-100">
+            <div className="flex flex-col min-h-screen bg-surface transition-colors">
+                <div className="px-5 pt-12 pb-4 border-b border-border">
                     <div className="h-6 w-32 shimmer rounded-lg" />
                 </div>
                 <div className="px-5 py-4 space-y-3">
@@ -79,54 +90,54 @@ export function ExperienceEditPage() {
 
     if (!experience) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen">
-                <p className="text-gray-500">기록을 찾을 수 없어요</p>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-surface">
+                <p className="text-gray-500 dark:text-gray-400">기록을 찾을 수 없어요</p>
                 <button onClick={() => navigate('/timeline')} className="mt-4 text-brand-500 font-semibold">돌아가기</button>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-white">
+        <div className="flex flex-col min-h-screen bg-surface transition-colors duration-300">
             {/* Header */}
-            <div className="px-5 pt-12 pb-4 flex items-center gap-3 border-b border-gray-100">
-                <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
-                    <ChevronLeft size={22} className="text-gray-500" />
+            <div className="px-5 pt-12 pb-4 flex items-center gap-3 border-b border-border transition-colors">
+                <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-surface-2 transition-colors">
+                    <ChevronLeft size={22} className="text-gray-500 dark:text-gray-400" />
                 </button>
-                <h1 className="font-extrabold text-gray-900 text-lg flex-1">기록 수정</h1>
+                <h1 className="font-extrabold text-gray-900 dark:text-gray-100 text-lg flex-1 transition-colors">기록 수정</h1>
             </div>
 
             {/* Form */}
             <div className="flex-1 px-5 py-6 space-y-5 overflow-y-auto pb-32">
                 {/* Title */}
                 <div>
-                    <label className="block text-sm font-bold text-gray-600 mb-2">제목</label>
+                    <label className="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2 transition-colors">제목</label>
                     <input
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-brand-400 transition-all"
+                        className="w-full px-4 py-3 rounded-2xl border-2 border-border dark:border-gray-800 bg-surface text-gray-900 dark:text-gray-100 focus:outline-none focus:border-brand-400 transition-all"
                     />
                 </div>
 
                 {/* Answers */}
                 {answers.map((ans) => (
                     <div key={ans.id}>
-                        <label className="block text-sm font-bold text-gray-600 mb-2">
+                        <label className="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2 transition-colors">
                             {STEP_LABELS[ans.step_key] ?? ans.step_key}
                         </label>
                         <textarea
                             value={editedAnswers[ans.id] ?? ans.answer}
                             onChange={(e) => setEditedAnswers((prev) => ({ ...prev, [ans.id]: e.target.value }))}
                             rows={3}
-                            className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 text-gray-900 resize-none focus:outline-none focus:border-brand-400 transition-all text-sm"
+                            className="w-full px-4 py-3 rounded-2xl border-2 border-border dark:border-gray-800 bg-surface text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:border-brand-400 transition-all text-sm"
                         />
                     </div>
                 ))}
             </div>
 
             {/* Save Button */}
-            <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 py-4 bg-white border-t border-gray-100 safe-bottom">
+            <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 py-4 bg-surface border-t border-border safe-bottom transition-colors z-[60]">
                 <Button fullWidth size="lg" loading={saving} onClick={handleSave}>
                     저장하기
                 </Button>

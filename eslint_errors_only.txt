@@ -1,0 +1,19 @@
+﻿  298:9  error  'scores' is never reassigned. Use 'const' instead  prefer-const
+   99:123  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  109:70   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  111:69   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  112:67   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  113:78   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  116:73   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  117:82   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  117:146  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  120:62   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  129:100  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  138:75   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  139:84   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  140:73   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  141:82   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  142:72   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  144:79   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+??23 problems (17 errors, 6 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.

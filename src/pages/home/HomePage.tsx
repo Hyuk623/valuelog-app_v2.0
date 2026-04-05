@@ -46,8 +46,8 @@ export function HomePage() {
             <div className="bg-surface px-5 pt-12 pb-6 border-b border-border transition-colors duration-300">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <p className="text-gray-400 text-sm">{today}</p>
-                        <h1 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 mt-0.5 transition-colors duration-300">
+                        <p className="text-gray-400 dark:text-gray-500 text-sm transition-colors">{today}</p>
+                        <h1 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 mt-0.5 transition-colors">
                             안녕하세요, <span className="text-brand-500">{profile?.display_name ?? '게스트'}</span>님! 👋
                         </h1>
                     </div>
@@ -67,7 +67,7 @@ export function HomePage() {
                 </div>
 
                 {/* XP / Level Bar */}
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 transition-colors">
+                <div className="bg-surface-2 dark:bg-gray-800/60 rounded-2xl p-4 border border-border transition-colors">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                             <Star size={16} className="text-xp-500 fill-xp-400" />
@@ -89,7 +89,12 @@ export function HomePage() {
 
                 {/* Today's Quest Card */}
                 <div
-                    onClick={() => !isCompleted && navigate('/quest')}
+                    onClick={() => {
+                        if (!isCompleted) {
+                            const isTutorial = localStorage.getItem('tutorial_done') !== 'true';
+                            navigate('/quest', { state: { category: 'daily', isTutorial } });
+                        }
+                    }}
                     className={`relative overflow-hidden rounded-3xl p-6 cursor-pointer transition-all duration-200 active:scale-95 ${isCompleted
                         ? 'bg-gradient-to-br from-brand-400 to-brand-600'
                         : 'bg-gradient-to-br from-brand-500 to-brand-700'
@@ -142,24 +147,24 @@ export function HomePage() {
                 </div>
 
                 {/* Weekly Goal */}
-                <div className="bg-white dark:bg-gray-800/40 rounded-2xl p-5 border border-gray-100 dark:border-gray-700/50 transition-colors">
+                <div className="bg-surface dark:bg-surface-3 rounded-2xl p-5 border border-border shadow-sm transition-colors">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <Trophy size={18} className="text-brand-500" />
-                            <span className="font-bold text-gray-800 dark:text-gray-100">이번주 목표</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-100 transition-colors">이번주 목표</span>
                         </div>
-                        <span className="text-sm text-gray-400">{weeklyDone} / {weeklyGoal}회</span>
+                        <span className="text-sm text-gray-400 dark:text-gray-500 transition-colors">{weeklyDone} / {weeklyGoal}회</span>
                     </div>
                     <div className="flex gap-2">
                         {Array.from({ length: weeklyGoal }).map((_, i) => (
                             <div
                                 key={i}
-                                className={`h-2.5 flex-1 rounded-full transition-all duration-500 ${i < weeklyDone ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-700'
+                                className={`h-2.5 flex-1 rounded-full transition-all duration-500 border border-transparent ${i < weeklyDone ? 'bg-brand-500' : 'bg-surface-2 dark:bg-gray-800'
                                     }`}
                             />
                         ))}
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 transition-colors">
                         {weeklyDone >= weeklyGoal ? '🎉 이번 주 목표 달성!' : `${weeklyGoal - weeklyDone}번 더 기록하면 목표 달성!`}
                     </p>
                 </div>
@@ -167,7 +172,7 @@ export function HomePage() {
                 {/* Quick Categories */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
-                        <span className="font-bold text-gray-800 dark:text-gray-100">자주 쓰는 카테고리</span>
+                        <span className="font-bold text-gray-800 dark:text-gray-100 transition-colors">자주 쓰는 카테고리</span>
                         <button onClick={() => navigate('/timeline')} className="text-brand-500 text-sm font-semibold">전체보기</button>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
@@ -189,7 +194,7 @@ export function HomePage() {
                                     <button
                                         key={key}
                                         onClick={() => navigate('/quest', { state: { category: key } })}
-                                        className="flex flex-col items-center gap-2 bg-white dark:bg-gray-800/40 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50 hover:border-brand-200 transition-all duration-200 active:scale-95"
+                                        className="flex flex-col items-center gap-2 bg-surface dark:bg-surface-3 rounded-2xl p-4 border border-border hover:border-brand-200 dark:hover:border-brand-900 shadow-sm transition-all duration-200 active:scale-95"
                                     >
                                         <span className="text-2xl">{cat.icon}</span>
                                         <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{cat.label}</span>
@@ -221,7 +226,7 @@ function StatCard({ icon, label, value, color }: { icon: string; label: string; 
         purple: 'bg-purple-50 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400',
     };
     return (
-        <div className={`rounded-2xl p-4 text-center ${colors[color] ?? 'bg-gray-50'}`}>
+        <div className={`rounded-2xl p-4 text-center border border-transparent transition-all duration-300 ${colors[color] ?? 'bg-surface-2'}`}>
             <div className="text-2xl mb-1">{icon}</div>
             <div className="font-extrabold text-lg leading-tight">{value}</div>
             <div className="text-xs opacity-70 mt-0.5">{label}</div>

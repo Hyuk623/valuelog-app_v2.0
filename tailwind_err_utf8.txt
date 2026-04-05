@@ -1,0 +1,20 @@
+﻿node.exe : [3m[1m[34m??[39m
+[22m[23m tailwindcss [34mv4
+.2.1[39m
+위치 줄:1 문자:1
++ & "C:\Program Files\nodejs/n
+ode.exe" "C:\Program Files\nod
+ejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: ([3m[1m  
+  [34m??...[34mv4.2.1[39m:   
+ String) [], RemoteExcepti    
+on
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+
+Done in [34m74ms[39m

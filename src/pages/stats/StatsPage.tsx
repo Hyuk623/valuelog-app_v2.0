@@ -321,7 +321,7 @@ export function StatsPage() {
                             {stats.topCategories.length > 0 && stats.topCompetencies.length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-border transition-colors">
                                     <p className="text-xs text-brand-500 font-bold mb-2">AI 기반 커리어 페르소나 🤖</p>
-                                    <div className="bg-gradient-to-br from-indigo-50/80 to-brand-50/80 dark:from-indigo-950/40 dark:to-brand-950/40 rounded-2xl p-5 border border-indigo-100/50 dark:border-indigo-900/40 shadow-sm transition-colors">
+                                    <div className="persona-card bg-gradient-to-br from-indigo-50/80 to-brand-50/80 dark:from-indigo-950/40 dark:to-brand-950/40 rounded-2xl p-5 border border-indigo-100/50 dark:border-indigo-900/40 shadow-sm transition-colors">
                                         {(() => {
                                             const persona = getPersona(
                                                 stats.topCategories.map(c => c.category),
@@ -335,16 +335,16 @@ export function StatsPage() {
                                                         </div>
                                                         <div>
                                                             <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-black uppercase tracking-widest mb-0.5">Your Persona</p>
-                                                            <p className="font-extrabold text-gray-900 dark:text-gray-100 text-lg transition-colors">{persona.name}</p>
+                                                            <p className="font-extrabold text-gray-900 text-lg">{persona.name}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="bg-white/60 dark:bg-gray-800/40 rounded-xl p-4 mb-4 border border-white/40 dark:border-gray-700/30 transition-colors">
-                                                        <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed font-medium">"{persona.message}"</p>
+                                                    <div className="persona-quote-box bg-white/70 rounded-xl p-4 mb-4 border border-white/50">
+                                                        <p className="text-sm text-gray-800 leading-relaxed font-medium">"{persona.message}"</p>
                                                     </div>
                                                     <div className="flex items-start gap-2 text-xs">
                                                         <span className="flex-shrink-0 mt-0.5">👉</span>
-                                                        <p className="text-gray-600 dark:text-gray-400 font-semibold leading-snug">
-                                                            <span className="text-indigo-700 dark:text-indigo-400 font-bold">{persona.action}</span>
+                                                        <p className="persona-action-text text-gray-700 font-semibold leading-snug">
+                                                            {persona.action}
                                                         </p>
                                                     </div>
                                                 </>

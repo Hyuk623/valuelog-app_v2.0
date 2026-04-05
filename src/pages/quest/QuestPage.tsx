@@ -10,6 +10,23 @@ import { ChevronLeft, X, ImagePlus, Plus, Trash2, CheckSquare, Square } from 'lu
 import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/lib/utils';
 
+// ===================== Tutorial Component =====================
+function TutorialBubble({ text, pointer = 'bottom', className = '' }: { text: string; pointer?: 'bottom' | 'top' | 'right' | 'left'; className?: string }) {
+    return (
+        <div className={`absolute z-[60] animate-bounce pointer-events-none drop-shadow-xl ${className}`}>
+            <div className="bg-brand-500 text-white text-[12px] font-extrabold px-4 py-2.5 rounded-2xl relative shadow-[0_4px_12px_rgba(0,0,0,0.2)] whitespace-pre-wrap text-center leading-relaxed">
+                {text}
+                {pointer === 'bottom' && (
+                    <div className="absolute w-3.5 h-3.5 bg-brand-500 rotate-45 -bottom-1.5 left-1/2 -translate-x-1/2 rounded-[2px]" />
+                )}
+                {pointer === 'top' && (
+                    <div className="absolute w-3.5 h-3.5 bg-brand-500 rotate-45 -top-1.5 left-1/2 -translate-x-1/2 rounded-[2px]" />
+                )}
+            </div>
+        </div>
+    );
+}
+
 // ===================== Built-in Prompts =====================
 const BUILTIN_PROMPTS: Record<string, PromptStep[]> = {
     exercise: [
@@ -87,6 +104,7 @@ export function QuestPage() {
     const { user, refreshProgress } = useAuthStore();
 
     const [stage, setStage] = useState<QuestStage>('category');
+    const [isTutorial] = useState<boolean>((location.state as any)?.isTutorial ?? false);
     const [selectedCategory, setSelectedCategory] = useState<string>((location.state as { category?: string })?.category ?? '');
     const [promptSet, setPromptSet] = useState<PromptSet | null>(null);
     const [currentStep, setCurrentStep] = useState(0);
@@ -97,7 +115,6 @@ export function QuestPage() {
     const [newBadges, setNewBadges] = useState<NewlyEarnedBadge[]>([]);
     const [earnedStreak, setEarnedStreak] = useState(0);
     const [earnedGrowthStreak, setEarnedGrowthStreak] = useState(0);
-    const [savedExpId, setSavedExpId] = useState<string | null>(null);
 
     // Photo
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -118,25 +135,37 @@ export function QuestPage() {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    // VisualViewport API: iOS/Android keyboard handling.
-    // Only update HEIGHT — changing top/left causes the container to drop below screen
-    // when iOS auto-scrolls the page to reveal the focused input.
+    const [savedExpId, setSavedExpId] = useState<string | null>(null);
+
+    // VisualViewport API: iOS/Android keyboard handling
     useEffect(() => {
         if (stage !== 'answering') return;
 
         const applyViewport = () => {
             const vv = window.visualViewport;
             if (!vv || !chatContainerRef.current) return;
-            // Only shrink height to match the visible area above the keyboard.
-            // Keep top:0, left:0 so the header stays at the top.
+            // The container is position: fixed. 
+            // - `top` offsets by visualViewport.offsetTop to counter layout scroll
+            // - `height` matches visualViewport.height exactly
             chatContainerRef.current.style.height = `${vv.height}px`;
+            chatContainerRef.current.style.top = `${vv.offsetTop}px`;
+
+            // Also ensure we are scrolled down in the chat
+            const container = chatMessagesRef.current;
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
         };
 
         window.visualViewport?.addEventListener('resize', applyViewport);
         window.visualViewport?.addEventListener('scroll', applyViewport);
+
         applyViewport();
+        // Additional apply in case software keyboard animations are still running
+        const timer = setTimeout(applyViewport, 300);
 
         return () => {
+            clearTimeout(timer);
             window.visualViewport?.removeEventListener('resize', applyViewport);
             window.visualViewport?.removeEventListener('scroll', applyViewport);
         };
@@ -156,7 +185,13 @@ export function QuestPage() {
 
 
     const scrollToBottom = () => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const container = chatMessagesRef.current;
+        if (container) {
+            // Use setTimeout to ensure the layout has updated
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
+        }
     };
 
     useEffect(() => {
@@ -167,13 +202,13 @@ export function QuestPage() {
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const chatMessagesRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (selectedCategory && stage === 'category') loadPromptSet(selectedCategory);
-    }, [selectedCategory]);
-
-    useEffect(() => {
-        if (stage === 'answering' && textareaRef.current) textareaRef.current.focus();
+        if (stage === 'answering' && textareaRef.current) {
+            textareaRef.current.focus();
+            scrollToBottom();
+        }
     }, [currentStep, stage]);
 
     const loadPromptSet = async (category: string) => {
@@ -207,6 +242,10 @@ export function QuestPage() {
     useEffect(() => {
         adjustTextareaHeight();
     }, [currentAnswer]);
+
+    useEffect(() => {
+        if (selectedCategory && stage === 'category') loadPromptSet(selectedCategory);
+    }, [selectedCategory, stage]);
 
     const handleNext = () => {
         if (!promptSet) return;
@@ -352,6 +391,11 @@ export function QuestPage() {
             const earned = await checkAndAwardBadges(user.id, earnedStreak, finalAnswers, newGrowthStreak);
             setNewBadges(earned);
             setXpResult({ ...xpBonus, trustLabel: trustResult.label });
+            if (earned.length > 0) setNewBadges(earned);
+
+            // Mark tutorial as done
+            localStorage.setItem('tutorial_done', 'true');
+
             await refreshProgress();
             setStage('completed');
         } catch (err) { console.error('Enrichment save error:', err); }
@@ -400,59 +444,59 @@ export function QuestPage() {
     const step = promptSet?.steps[currentStep];
     const catInfo = CATEGORIES[selectedCategory] ?? CATEGORIES['daily']!;
     const trustInfo = TRUST_LABELS[xpResult?.trustLabel ?? 'self']!;
-
     return (
-        <div className="flex flex-col bg-white" style={{ height: '100dvh' }}>
-            {/* Header */}
-            <div className="px-5 pt-12 pb-4 flex items-center gap-3 border-b border-gray-100">
-                <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-gray-100">
-                    {stage === 'answering' ? <X size={22} className="text-gray-500" /> : <ChevronLeft size={22} className="text-gray-500" />}
-                </button>
-                <p className={cn("font-semibold text-brand-500", getFontSizeClass('text-sm'))}>
-                    {stage === 'answering' ? `${catInfo.icon} ${catInfo.label}` : stage === 'photo' ? '📸 활동 사진' : stage === 'enrichment' ? '✨ 기록 강화하기' : '오늘의 퀘스트'}
-                </p>
-            </div>
+        <div className="flex flex-col bg-surface overflow-hidden" style={{ height: '100dvh', position: 'relative' }}>
+            {/* Header - Only for stages except answering */}
+            {stage !== 'answering' && (
+                <div className="px-5 pt-12 pb-4 flex items-center gap-3 border-b border-border transition-colors flex-shrink-0">
+                    <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-surface-2 transition-colors">
+                        <ChevronLeft size={22} className="text-gray-500 dark:text-gray-400" />
+                    </button>
+                    <p className={cn("font-semibold text-brand-500", getFontSizeClass('text-sm'))}>
+                        {stage === 'photo' ? '📸 활동 사진' : stage === 'enrichment' ? '✨ 기록 강화하기' : stage === 'completed' ? '퀘스트 완료' : '오늘의 퀘스트'}
+                    </p>
+                </div>
+            )}
 
             {/* ── Category ── */}
             {stage === 'category' && (
-                <div className="flex-1 px-5 py-6 animate-fade-in">
-                    <h2 className="text-2xl font-extrabold text-gray-900 mb-1">어떤 기록을 할까요?</h2>
-                    <p className="text-gray-400 text-sm mb-5">카테고리를 선택하면 맞춤 질문을 드려요</p>
+                <div className="flex-1 px-5 py-6 animate-fade-in overflow-y-auto">
+                    <h2 className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 mb-1 transition-colors">어떤 기록을 할까요?</h2>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm mb-5 transition-colors">카테고리를 선택하면 맞춤 질문을 드려요</p>
                     <div className="space-y-2.5">
                         {Object.entries(CATEGORIES).map(([key, { label, icon }]) => (
                             <button key={key} onClick={() => { setSelectedCategory(key); loadPromptSet(key); }}
-                                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all text-left">
+                                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-border dark:border-gray-800 hover:border-brand-200 hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-all text-left">
                                 <span className="text-2xl w-9 text-center">{icon}</span>
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-bold text-gray-900 text-sm">{label}</div>
-                                    <div className="text-xs text-gray-400 truncate">{getCategoryDesc(key)}</div>
+                                    <div className="font-bold text-gray-900 dark:text-gray-100 text-sm transition-colors">{label}</div>
+                                    <div className="text-xs text-gray-400 dark:text-gray-500 truncate transition-colors">{getCategoryDesc(key)}</div>
                                 </div>
-                                <ChevronLeft className="rotate-180 text-gray-300 flex-shrink-0" size={18} />
+                                <ChevronLeft className="rotate-180 text-gray-300 dark:text-gray-600 flex-shrink-0" size={18} />
                             </button>
                         ))}
                     </div>
                 </div>
             )}
 
-            {/* ── Answering ── KakaoTalk-style: fixed screen, scrollable chat, pinned input */}
+            {/* ── Answering ── KakaoTalk-style: Dynamic height/top adjusted by VisualViewport */}
             {stage === 'answering' && promptSet && step && (
                 <div
                     ref={chatContainerRef}
-                    className="flex flex-col"
+                    className="flex flex-col bg-surface overflow-hidden"
                     style={{
                         position: 'fixed',
                         top: 0,
                         left: 0,
                         right: 0,
-                        bottom: 0,
+                        height: '100dvh',
                         zIndex: 40,
-                        background: '#fff',
                     }}
                 >
                     {/* Header inside fixed container - Compact */}
-                    <div className="px-5 pt-10 pb-3 flex items-center gap-3 border-b border-gray-50 flex-shrink-0">
-                        <button onClick={() => navigate(-1)} className="p-1.5 rounded-xl hover:bg-gray-100">
-                            <X size={20} className="text-gray-500" />
+                    <div className="px-5 pt-10 pb-3 flex items-center gap-3 border-b border-border flex-shrink-0 transition-colors">
+                        <button onClick={() => navigate(-1)} className="p-1.5 rounded-xl hover:bg-surface-2 transition-colors">
+                            <X size={20} className="text-gray-500 dark:text-gray-400" />
                         </button>
                         <p className={cn("font-bold text-brand-500", getFontSizeClass('text-sm'))}>
                             {catInfo.icon} {catInfo.label}
@@ -463,24 +507,24 @@ export function QuestPage() {
                     <div className="px-5 pt-1 pb-1 flex-shrink-0">
                         <div className="flex gap-1 mb-0.5">
                             {promptSet.steps.map((_, i) => (
-                                <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < currentStep ? 'bg-brand-500' : i === currentStep ? 'bg-brand-300' : 'bg-gray-100'}`} />
+                                <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < currentStep ? 'bg-brand-500' : i === currentStep ? 'bg-brand-300' : 'bg-surface-2 dark:bg-gray-800'}`} />
                             ))}
                         </div>
                         <div className="flex justify-between items-center h-4">
-                            <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">Growth Quest</span>
+                            <span className="text-[9px] font-bold text-gray-300 dark:text-gray-600 uppercase tracking-widest transition-colors">Growth Quest</span>
                             <p className="text-[10px] font-black text-brand-400">{currentStep + 1}/{promptSet.steps.length}</p>
                         </div>
                     </div>
 
                     {/* Chat messages - scrollable */}
-                    <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ overscrollBehavior: 'contain' }}>
+                    <div ref={chatMessagesRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ overscrollBehavior: 'contain' }}>
                         {answers.map((ans, idx) => {
                             const s = promptSet.steps[idx];
                             return s ? (
                                 <div key={idx} className="space-y-2 animate-fade-in">
                                     <div className="flex items-start gap-2">
                                         <div className="w-6 h-6 rounded-full bg-brand-400 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">V</div>
-                                        <div className={cn("bg-gray-50 rounded-2xl rounded-tl-sm px-3 py-2 text-gray-600 max-w-[85%]", getChatFontSizeClass())}>{s.question}</div>
+                                        <div className={cn("quest-bubble bg-surface-2 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%] border border-border transition-colors", getChatFontSizeClass())}>{s.question}</div>
                                     </div>
                                     <div className="flex justify-end">
                                         <div className={cn("bg-brand-500 rounded-2xl rounded-tr-sm px-3 py-2 text-white max-w-[85%]", getChatFontSizeClass())}>{ans.answer || '−'}</div>
@@ -490,7 +534,7 @@ export function QuestPage() {
                         })}
                         <div className="flex items-start gap-2 animate-slide-up">
                             <div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">V</div>
-                            <div className={cn("bg-brand-50 rounded-2xl rounded-tl-sm px-3 py-2 text-gray-800 font-bold border border-brand-100 max-w-[85%] shadow-sm", getChatFontSizeClass())}>
+                            <div className={cn("quest-question-bubble bg-brand-50 rounded-2xl rounded-tl-sm px-3 py-2 font-bold border border-brand-100 max-w-[85%] shadow-sm transition-colors", getChatFontSizeClass())}>
                                 {step.question}{!step.required && <span className="text-brand-300 text-[10px] ml-1 font-normal">(옵션)</span>}
                             </div>
                         </div>
@@ -499,7 +543,7 @@ export function QuestPage() {
                     </div>
 
                     {/* Input area - Strictly Ultra-Compact */}
-                    <div className="flex-shrink-0 px-3 pb-3 border-t border-brand-50 pt-2 bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+                    <div className="flex-shrink-0 px-3 pb-3 border-t border-border pt-2 bg-surface shadow-[0_-10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-5px_20px_rgba(0,0,0,0.3)] transition-colors">
                         {step.examples && (
                             <div
                                 className="flex gap-2 mb-2 no-scrollbar px-1"
@@ -512,7 +556,7 @@ export function QuestPage() {
                             >
                                 {step.examples.map(ex => (
                                     <button key={ex} onClick={() => appendExample(ex)}
-                                        className="whitespace-nowrap text-[10px] font-extrabold bg-brand-50/50 text-brand-600 px-3 py-1.5 rounded-full border border-brand-100 active:scale-90 transition-all flex-shrink-0">
+                                        className="quest-chip whitespace-nowrap text-[10px] font-extrabold bg-brand-50/50 text-brand-600 px-3 py-1.5 rounded-full border border-brand-200 active:scale-90 transition-all flex-shrink-0">
                                         {ex}
                                     </button>
                                 ))}
@@ -526,6 +570,9 @@ export function QuestPage() {
                                     setCurrentAnswer(e.target.value);
                                     adjustTextareaHeight();
                                 }}
+                                onFocus={() => {
+                                    setTimeout(scrollToBottom, 300);
+                                }}
                                 placeholder={step.placeholder}
                                 rows={1}
                                 style={{
@@ -538,14 +585,20 @@ export function QuestPage() {
                                     paddingBottom: '10px'
                                 }}
                                 className={cn(
-                                    "flex-1 px-3 rounded-xl border-2 border-gray-100 text-gray-900 placeholder-gray-300 resize-none focus:outline-none focus:border-brand-400 transition-all bg-gray-50/30",
+                                    "flex-1 px-3 rounded-xl border-2 border-border dark:border-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 resize-none focus:outline-none focus:border-brand-400 transition-all bg-surface-2 dark:bg-gray-800/10",
                                 )}
                             />
+                            {isTutorial && currentStep === 0 && !currentAnswer && (
+                                <TutorialBubble text="이곳을 눌러 오늘의 활동을\n가볍게 적어보세요." pointer="bottom" className="bottom-[120%] mb-1 left-4" />
+                            )}
+                            {isTutorial && currentStep === 0 && currentAnswer && (
+                                <TutorialBubble text="좋아요! 다 적었다면\n전송 버튼을 눌러주세요." pointer="bottom" className="bottom-[120%] mb-1 right-2" />
+                            )}
                             <Button
                                 onClick={handleNext}
                                 disabled={step.required && !currentAnswer.trim()}
                                 size="sm"
-                                className="h-10 w-10 rounded-full flex-shrink-0 p-0 flex items-center justify-center shadow-md shadow-brand-100"
+                                className="h-10 w-10 rounded-full flex-shrink-0 p-0 flex items-center justify-center shadow-md shadow-brand-100 relative"
                             >
                                 <Plus size={18} className={currentStep < promptSet.steps.length - 1 ? "" : "rotate-45 transition-transform"} />
                             </Button>
@@ -554,7 +607,7 @@ export function QuestPage() {
                             <div className="flex justify-center mt-1.5">
                                 <button
                                     onClick={handleNext}
-                                    className="text-[9px] font-black text-gray-300 hover:text-brand-400 transition-colors uppercase tracking-[0.3em]"
+                                    className="text-[9px] font-black text-gray-300 dark:text-gray-600 hover:text-brand-400 transition-colors uppercase tracking-[0.3em]"
                                 >
                                     Skip Question
                                 </button>
@@ -566,25 +619,32 @@ export function QuestPage() {
 
             {/* ── Photo ── */}
             {stage === 'photo' && (
-                <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 animate-fade-in">
+                <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 animate-fade-in bg-surface transition-colors">
                     <div className="text-5xl mb-4">📸</div>
-                    <h2 className="text-xl font-extrabold text-gray-900 mb-2">활동 사진 추가</h2>
-                    <p className="text-gray-500 text-sm text-center mb-8">나중에 포트폴리오로 활용할 수 있어요!</p>
-                    <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handlePhotoSelect} className="hidden" />
+                    <h2 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 mb-2 transition-colors">활동 사진 추가</h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm text-center mb-8 transition-colors">나중에 포트폴리오로 활용할 수 있어요!<br /><span className="text-[11px] opacity-70">어플이나 사진첩에서 선택할 수 있습니다.</span></p>
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
                     {imagePreview ? (
                         <div className="relative w-full max-w-xs mb-6">
-                            <img src={imagePreview} alt="preview" className="w-full rounded-2xl object-cover max-h-48" />
-                            <button onClick={() => { setImageFile(null); setImagePreview(null); }} className="absolute -top-2 -right-2 w-7 h-7 bg-gray-800 text-white rounded-full flex items-center justify-center text-xs">✕</button>
+                            <img src={imagePreview} alt="preview" className="w-full rounded-2xl object-cover max-h-48 shadow-lg border border-border" />
+                            <button onClick={() => { setImageFile(null); setImagePreview(null); }} className="absolute -top-2 -right-2 w-7 h-7 bg-gray-800 dark:bg-gray-700 text-white rounded-full flex items-center justify-center text-xs transition-colors">✕</button>
                         </div>
                     ) : (
-                        <button onClick={() => fileInputRef.current?.click()} className="w-full max-w-xs h-36 border-2 border-dashed border-brand-300 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-brand-50 transition-all mb-6">
+                        <button onClick={() => fileInputRef.current?.click()} className="w-full max-w-xs h-36 border-2 border-dashed border-brand-300 dark:border-brand-900/40 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-all mb-6">
                             <ImagePlus size={32} className="text-brand-400" />
                             <span className="text-sm font-semibold text-brand-500">사진 선택 / 촬영</span>
                         </button>
                     )}
+
+                    {isTutorial && !imageFile && (
+                        <div className="relative w-full max-w-xs h-0 flex justify-center">
+                            <TutorialBubble text="기록을 더 생생하게!\n사진을 추가해보거나\n그냥 건너뛸 수도 있어요." pointer="bottom" className="bottom-2 mb-2" />
+                        </div>
+                    )}
+
                     <div className="flex flex-col gap-3 w-full">
-                        <Button fullWidth size="lg" loading={loading} onClick={() => handlePhotoNext(false)}>
-                            {imageFile ? '📸 사진 포함해서 다음' : '다음 →'}
+                        <Button fullWidth size="lg" loading={loading} onClick={() => handlePhotoNext(false)} disabled={!imageFile}>
+                            {imageFile ? '📸 사진 포함해서 다음' : '사진을 선택해주세요'}
                         </Button>
                         <Button fullWidth variant="secondary" onClick={() => handlePhotoNext(true)}>사진 없이 다음</Button>
                     </div>
@@ -593,15 +653,24 @@ export function QuestPage() {
 
             {/* ── Enrichment ── */}
             {stage === 'enrichment' && (
-                <div className="flex-1 flex flex-col animate-fade-in overflow-hidden">
+                <div className="flex-1 flex flex-col bg-surface animate-fade-in overflow-hidden transition-colors">
                     <div className="px-5 pt-4 pb-2">
-                        <h2 className="text-xl font-extrabold text-gray-900">기록을 강화하세요 ✨</h2>
-                        <p className="text-sm text-gray-500 mt-1">추가할수록 신뢰도 배지와 XP 보너스를 받아요</p>
+                        <h2 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 transition-colors">기록을 강화하세요 ✨</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 transition-colors">추가할수록 신뢰도 배지와 XP 보너스를 받아요</p>
+
+                        {isTutorial && enrichmentTab === 'proof' && (
+                            <TutorialBubble text="기록을 증명할 수 있는 것들을\n추가해볼까요? 우선 탭들을 훑어보세요." pointer="top" className="top-full mt-2 left-5 z-50" />
+                        )}
+
                         {/* Tab */}
-                        <div className="flex gap-1 mt-4 bg-gray-100 rounded-2xl p-1">
+                        <div className="flex gap-1 mt-4 bg-surface-2 dark:bg-gray-800 rounded-2xl p-1 border border-border transition-colors relative">
+                            {/* Tutorial Bubble for Competency Tab */}
+                            {isTutorial && enrichmentTab === 'proof' && (
+                                <TutorialBubble text="마지막 핵심!\n역량 탭을 눌러 내가 발휘한\n강점을 찾아보세요." pointer="top" className="top-[110%] right-4 z-50 mt-1" />
+                            )}
                             {[{ id: 'proof', label: '🔗 증빙 링크' }, { id: 'impact', label: '📊 성과 수치' }, { id: 'competency', label: '💡 역량 체크' }].map(t => (
                                 <button key={t.id} onClick={() => setEnrichmentTab(t.id as typeof enrichmentTab)}
-                                    className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${enrichmentTab === t.id ? 'bg-white shadow-sm text-brand-600' : 'text-gray-500'}`}>
+                                    className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${enrichmentTab === t.id ? 'bg-surface shadow-sm text-brand-600 dark:text-brand-400' : 'text-gray-500 dark:text-gray-400'}`}>
                                     {t.label}
                                 </button>
                             ))}
@@ -612,14 +681,14 @@ export function QuestPage() {
                         {/* Proof Tab */}
                         {enrichmentTab === 'proof' && (
                             <div className="space-y-3">
-                                <p className="text-xs text-gray-400 mb-2">URL을 붙여넣으면 증빙 링크로 저장돼요 (최대 3개)</p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mb-2 transition-colors">URL을 붙여넣으면 증빙 링크로 저장돼요 (최대 3개)</p>
                                 {proofDrafts.map((p, i) => (
-                                    <div key={i} className="space-y-2 bg-gray-50 rounded-2xl p-3">
+                                    <div key={i} className="space-y-2 bg-surface-2 dark:bg-gray-800/40 rounded-2xl p-3 border border-border transition-colors">
                                         <input value={p.url} onChange={e => { const d = [...proofDrafts]; d[i] = { ...d[i], url: e.target.value }; setProofDrafts(d); }}
-                                            placeholder="https://..." className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-brand-400" />
+                                            placeholder="https://..." className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-sm focus:outline-none focus:border-brand-400 dark:text-gray-100 transition-colors" />
                                         <input value={p.title} onChange={e => { const d = [...proofDrafts]; d[i] = { ...d[i], title: e.target.value }; setProofDrafts(d); }}
-                                            placeholder="제목 (선택)" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-brand-400" />
-                                        {i > 0 && <button onClick={() => setProofDrafts(d => d.filter((_, j) => j !== i))} className="flex items-center gap-1 text-xs text-red-400"><Trash2 size={12} />삭제</button>}
+                                            placeholder="제목 (선택)" className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-sm focus:outline-none focus:border-brand-400 dark:text-gray-100 transition-colors" />
+                                        {i > 0 && <button onClick={() => setProofDrafts(d => d.filter((_, j) => j !== i))} className="flex items-center gap-1 text-xs text-red-400 transition-colors"><Trash2 size={12} />삭제</button>}
                                     </div>
                                 ))}
                                 {proofDrafts.length < 3 && (
@@ -632,38 +701,47 @@ export function QuestPage() {
 
                         {/* Impact Tab */}
                         {enrichmentTab === 'impact' && (
-                            <div className="space-y-4">
-                                <p className="text-xs text-gray-400">전/후 수치, 피드백, 결과물 등 구체적인 성과를 기록하면 XP +10을 드려요</p>
+                            <div className="space-y-4 relative">
+                                {isTutorial && (
+                                    <TutorialBubble text="숫자나 객관적인 변화량을 적으면\n성장 수치가 더 정확하게 계산돼요!" pointer="top" className="top-10 left-5 z-50 mt-1" />
+                                )}
+                                <p className="text-xs text-gray-400 dark:text-gray-500 transition-colors">전/후 수치, 피드백, 결과물 등 구체적인 성과를 기록하면 XP +10을 드려요</p>
                                 <div className="flex gap-2">
                                     {[{ v: 'metric', l: '📈 수치/지표' }, { v: 'feedback', l: '💬 피드백' }, { v: 'artifact', l: '📄 결과물' }].map(t => (
                                         <button key={t.v} onClick={() => setImpactType(t.v as typeof impactType)}
-                                            className={`flex-1 py-2 text-xs font-semibold rounded-xl border-2 transition-all ${impactType === t.v ? 'border-brand-400 bg-brand-50 text-brand-600' : 'border-gray-200 text-gray-500'}`}>
+                                            className={`flex-1 py-2 text-xs font-semibold rounded-xl border-2 transition-all ${impactType === t.v ? 'border-brand-400 bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400' : 'border-border bg-surface-2 text-gray-500 dark:text-gray-400'}`}>
                                             {t.l}
                                         </button>
                                     ))}
                                 </div>
                                 <textarea value={impactValue} onChange={e => setImpactValue(e.target.value)} rows={4}
                                     placeholder={impactType === 'metric' ? '예: 달리기 5km → 6km으로 향상, 처리 시간 2시간 → 45분 단축' : impactType === 'feedback' ? '예: 팀장님 "이번 보고서 정말 완성도 높았어"' : '예: GitHub 링크, 발표 자료 URL, 완성된 작품 설명'}
-                                    className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 text-sm focus:outline-none focus:border-brand-400 resize-none" />
+                                    className="w-full px-4 py-3 rounded-2xl border-2 border-border dark:border-gray-800 bg-surface text-sm focus:outline-none focus:border-brand-400 dark:text-gray-100 resize-none transition-all" />
                             </div>
                         )}
 
                         {/* Competency Tab */}
                         {enrichmentTab === 'competency' && (
-                            <div className="space-y-4">
-                                <p className="text-xs text-gray-400">이 경험과 관련된 역량을 1~3개 골라 체크리스트에 답해보세요</p>
+                            <div className="space-y-4 relative">
+                                {isTutorial && (
+                                    <TutorialBubble text="체크리스트를 선택하면\n추가 경험치(XP)를\n얻을 수 있어요!" pointer="bottom" className="top-8 left-1/2 -translate-x-1/2 z-50 mb-4" />
+                                )}
+                                <p className="text-xs text-gray-400 transition-colors">이 경험과 관련된 역량을 1~3개 골라 체크리스트에 답해보세요</p>
                                 {COMPETENCIES.map(comp => {
                                     const draft = competencyDrafts.find(d => d.key === comp.key);
                                     const isSelected = !!draft;
                                     return (
-                                        <div key={comp.key} className={`rounded-2xl border-2 overflow-hidden transition-all ${isSelected ? 'border-brand-300 bg-brand-50' : 'border-gray-200'}`}>
+                                        <div key={comp.key} className={`enrichment-comp-card rounded-2xl border-2 overflow-hidden transition-all ${isSelected ? 'border-brand-300 bg-brand-50 is-selected' : 'border-border bg-surface-2'}`}>
                                             <button onClick={() => {
                                                 if (isSelected) { setCompetencyDrafts(d => d.filter(x => x.key !== comp.key)); }
                                                 else if (competencyDrafts.length < 3) { setCompetencyDrafts(d => [...d, { key: comp.key, checked: {} }]); }
-                                            }} className="w-full flex items-center gap-3 p-3 text-left">
+                                            }} className="w-full flex items-center gap-3 p-3 text-left transition-colors">
                                                 <span className="text-xl">{comp.icon}</span>
-                                                <div className="flex-1"><p className="font-semibold text-sm text-gray-900">{comp.label}</p><p className="text-xs text-gray-400">{comp.description}</p></div>
-                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-brand-500 bg-brand-500' : 'border-gray-300'}`}>
+                                                <div className="flex-1">
+                                                    <p className="enrichment-comp-label font-semibold text-sm text-gray-900 transition-colors">{comp.label}</p>
+                                                    <p className="enrichment-comp-desc text-xs text-gray-400 transition-colors">{comp.description}</p>
+                                                </div>
+                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-brand-500 bg-brand-500' : 'border-gray-300'}`}>
                                                     {isSelected && <span className="text-white text-xs">✓</span>}
                                                 </div>
                                             </button>
@@ -674,9 +752,9 @@ export function QuestPage() {
                                                         return (
                                                             <button key={ci.key} onClick={() => {
                                                                 setCompetencyDrafts(d => d.map(x => x.key === comp.key ? { ...x, checked: { ...x.checked, [ci.key]: !checked } } : x));
-                                                            }} className="flex items-center gap-3 w-full text-left">
-                                                                {checked ? <CheckSquare size={18} className="text-brand-500 flex-shrink-0" /> : <Square size={18} className="text-gray-300 flex-shrink-0" />}
-                                                                <span className="text-sm text-gray-700">{ci.label}</span>
+                                                            }} className="flex items-center gap-3 w-full text-left transition-colors">
+                                                                {checked ? <CheckSquare size={18} className="text-brand-500 flex-shrink-0" /> : <Square size={18} className="enrichment-comp-check text-gray-300 flex-shrink-0 transition-colors" />}
+                                                                <span className="enrichment-comp-item text-sm text-gray-700 transition-colors">{ci.label}</span>
                                                             </button>
                                                         );
                                                     })}
@@ -684,7 +762,7 @@ export function QuestPage() {
                                                         const cnt = Object.values(draft.checked).filter(Boolean).length;
                                                         const lvl = calcCompetencyLevel(cnt);
                                                         const anchor = COMPETENCIES.find(c => c.key === comp.key)?.anchors[lvl];
-                                                        return <p className="text-xs font-bold text-brand-600 mt-2">레벨 {lvl}: {anchor}</p>;
+                                                        return <p className="enrichment-comp-anchor text-xs font-bold text-brand-600 mt-2">레벨 {lvl}: {anchor}</p>;
                                                     })()}
                                                 </div>
                                             )}
@@ -695,7 +773,7 @@ export function QuestPage() {
                         )}
                     </div>
 
-                    <div className="px-5 pb-8 pt-3 border-t border-gray-100 space-y-3">
+                    <div className="px-5 pb-8 pt-3 border-t border-border bg-surface transition-colors space-y-3">
                         <Button fullWidth size="lg" loading={enrichSaving} onClick={handleEnrichmentSave}>저장하고 완료! 🎉</Button>
                         <Button fullWidth variant="secondary" onClick={async () => { await checkAndAwardBadges(user!.id, earnedStreak, finalAnswers, 0); setXpResult({ base: 20, bonus: 0, total: 20, breakdown: [], trustLabel: 'self' }); await refreshProgress(); setStage('completed'); }}>강화 없이 완료</Button>
                     </div>
@@ -704,10 +782,14 @@ export function QuestPage() {
 
             {/* ── Completed ── */}
             {stage === 'completed' && (
-                <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 text-center overflow-y-auto">
+                <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 text-center overflow-y-auto bg-surface transition-colors">
                     <div className="text-7xl mb-4">🎉</div>
-                    <h2 className="text-3xl font-extrabold text-gray-900 mb-2">퀘스트 완료!</h2>
-                    <p className="text-gray-500 mb-6">오늘도 한 걸음 성장했어요</p>
+                    <h2 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-2 transition-colors">퀘스트 완료!</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 transition-colors">오늘도 한 걸음 성장했어요</p>
+
+                    {isTutorial && (
+                        <TutorialBubble text="축하합니다! 첫 기록을 무사히 마쳤네요.\n이제 홈 화면에서 나의 성장을 확인해보세요!" pointer="bottom" className="bottom-full mb-4 left-1/2 -translate-x-1/2 z-50" />
+                    )}
 
                     {/* XP 상세 */}
                     {xpResult ? (
@@ -737,12 +819,12 @@ export function QuestPage() {
                     )}
 
                     <div className="flex gap-3 mb-5 w-full">
-                        <div className="flex-1 flex flex-col items-center gap-1 bg-orange-50 rounded-2xl p-4">
+                        <div className="flex-1 flex flex-col items-center gap-1 bg-orange-50 dark:bg-orange-950/20 rounded-2xl p-4 transition-colors">
                             <span className="text-2xl">🔥</span>
                             <span className="font-bold text-orange-500 text-sm">{earnedStreak}일 스트릭</span>
                         </div>
                         {earnedGrowthStreak > 0 && (
-                            <div className="flex-1 flex flex-col items-center gap-1 bg-green-50 rounded-2xl p-4">
+                            <div className="flex-1 flex flex-col items-center gap-1 bg-green-50 dark:bg-green-950/20 rounded-2xl p-4 transition-colors">
                                 <span className="text-2xl">🌿</span>
                                 <span className="font-bold text-green-600 text-sm">성장 {earnedGrowthStreak}일</span>
                             </div>
@@ -750,12 +832,12 @@ export function QuestPage() {
                     </div>
 
                     {newBadges.length > 0 && (
-                        <div className="bg-brand-50 rounded-2xl p-5 mb-5 w-full">
-                            <p className="font-bold text-brand-700 mb-3">🏅 새 배지 획득!</p>
+                        <div className="bg-brand-50 dark:bg-brand-950/20 rounded-2xl p-5 mb-5 w-full border border-brand-100 dark:border-brand-900/40 transition-colors">
+                            <p className="font-bold text-brand-700 dark:text-brand-300 mb-3 transition-colors">🏅 새 배지 획득!</p>
                             {newBadges.map(b => (
                                 <div key={b.id} className="flex items-center gap-3 mb-2">
                                     <span className="text-2xl">{b.icon}</span>
-                                    <div className="text-left"><p className="font-bold text-brand-700 text-sm">{b.name}</p><p className="text-brand-500 text-xs">{b.description}</p></div>
+                                    <div className="text-left"><p className="font-bold text-brand-700 dark:text-brand-300 text-sm transition-colors">{b.name}</p><p className="text-brand-500 dark:text-brand-400 text-xs transition-colors">{b.description}</p></div>
                                 </div>
                             ))}
                         </div>

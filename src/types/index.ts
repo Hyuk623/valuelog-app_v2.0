@@ -96,6 +96,14 @@ export interface ExperienceAnswer {
     created_at: string;
 }
 
+export interface ExperienceEditLog {
+    id: string;
+    experience_id: string;
+    user_id: string;
+    snapshot: any;
+    created_at: string;
+}
+
 export interface DailyProgress {
     user_id: string;
     local_date: string;
