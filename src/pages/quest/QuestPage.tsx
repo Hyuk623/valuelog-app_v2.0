@@ -2,12 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
-import { CATEGORIES, XP_PER_QUEST, getLocalDateKST } from '@/types';
-import type { PromptSet, PromptStep, QuestAnswer, NewlyEarnedBadge, ExperienceCompetency } from '@/types';
+import { CATEGORIES, XP_PER_QUEST, getLevelFromXP, getLocalDateKST, SKILLS } from '@/types';
+import type { PromptSet, PromptStep, QuestAnswer, Experience, ExperienceAnswer, ExperienceCompetency, ExperienceSkill, Skill, NewlyEarnedBadge, CategoryKey } from '@/types';
 import { COMPETENCIES, calcCompetencyLevel, calcTrust, calcXPBonus, TRUST_LABELS } from '@/lib/competencies';
 import { calcQualityScore } from '@/lib/quality';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, X, ImagePlus, Plus, Trash2, CheckSquare, Square } from 'lucide-react';
+import { ChevronLeft, Send, Check, Sparkles, Plus, Trash2, ExternalLink, Award, Share2, Square, CheckSquare, Wrench, Tag, Zap, X, ImagePlus } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/lib/utils';
 
@@ -127,7 +127,8 @@ export function QuestPage() {
     const [impactType, setImpactType] = useState<'metric' | 'feedback' | 'artifact'>('metric');
     const [impactValue, setImpactValue] = useState('');
     const [competencyDrafts, setCompetencyDrafts] = useState<CompetencyDraft[]>([]);
-    const [enrichmentTab, setEnrichmentTab] = useState<'proof' | 'impact' | 'competency'>('proof');
+    const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+    const [enrichmentTab, setEnrichmentTab] = useState<'proof' | 'impact' | 'competency' | 'skill'>('proof');
     const [enrichSaving, setEnrichSaving] = useState(false);
 
     // XP summary
@@ -676,14 +677,19 @@ export function QuestPage() {
                         )}
 
                         {/* Tab */}
-                        <div className="flex gap-1 mt-4 bg-surface-2 dark:bg-gray-800 rounded-2xl p-1 border border-border transition-colors relative">
+                        <div className="flex gap-1 mt-4 bg-surface-2 dark:bg-gray-800 rounded-2xl p-1 border border-border transition-colors relative h-11 overflow-x-auto hide-scrollbar">
                             {/* Tutorial Bubble for Competency Tab */}
                             {isTutorial && enrichmentTab === 'proof' && (
                                 <TutorialBubble text="마지막 핵심!\n역량 탭을 눌러 내가 발휘한\n강점을 찾아보세요." pointer="top" className="top-[110%] right-4 z-50 mt-1" />
                             )}
-                            {[{ id: 'proof', label: '🔗 증빙 링크' }, { id: 'impact', label: '📊 성과 수치' }, { id: 'competency', label: '💡 역량 체크' }].map(t => (
+                            {[
+                                { id: 'proof', label: '🔗 증빙' }, 
+                                { id: 'skill', label: '🛠️ 스킬' },
+                                { id: 'impact', label: '📊 성과' }, 
+                                { id: 'competency', label: '💡 역량' }
+                            ].map(t => (
                                 <button key={t.id} onClick={() => setEnrichmentTab(t.id as typeof enrichmentTab)}
-                                    className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${enrichmentTab === t.id ? 'bg-surface shadow-sm text-brand-600 dark:text-brand-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                    className={`flex-1 py-1 px-2 whitespace-nowrap text-[11px] font-bold rounded-xl transition-all ${enrichmentTab === t.id ? 'bg-surface shadow-sm text-brand-600 dark:text-brand-400' : 'text-gray-500 dark:text-gray-400'}`}>
                                     {t.label}
                                 </button>
                             ))}
@@ -784,6 +790,37 @@ export function QuestPage() {
                                 })}
                             </div>
                         )}
+
+                        {/* Skill Selection Tab */}
+                        {enrichmentTab === 'skill' && (
+                            <div className="space-y-5 animate-fade-in pb-4">
+                                <div className="space-y-1.5 px-1 mt-1">
+                                    <h3 className="text-sm font-extrabold text-gray-800 dark:text-gray-200">🛠️ 활용한 기술 및 도구</h3>
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-relaxed">이 경험에서 발휘된 핵심 스킬을 태그해두면 나중에 나만의 전문 기술 스택 자산이 됩니다.</p>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {SKILLS.map(skill => {
+                                        const isSelected = selectedSkills.includes(skill.key);
+                                        return (
+                                            <button
+                                                key={skill.key}
+                                                onClick={() => setSelectedSkills(prev => 
+                                                    isSelected ? prev.filter(s => s !== skill.key) : [...prev, skill.key]
+                                                )}
+                                                className={cn(
+                                                    "px-3.5 py-2 rounded-2xl text-xs font-bold transition-all duration-200 border-2",
+                                                    isSelected 
+                                                    ? "bg-brand-500 text-white border-brand-500 shadow-lg shadow-brand-500/20 scale-105" 
+                                                    : "bg-surface border-border text-gray-500 dark:text-gray-400 hover:border-brand-200 dark:hover:border-brand-900"
+                                                )}
+                                            >
+                                                {skill.name_ko}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="px-5 pb-8 pt-3 border-t border-border bg-surface transition-colors space-y-3">
@@ -823,11 +860,45 @@ export function QuestPage() {
                         </div>
                     )}
 
+                    {/* Quality Bar (New) */}
+                    {xpResult && (
+                        <div className="bg-surface-2 dark:bg-gray-800/50 rounded-2xl p-4 mb-4 w-full border border-border transition-colors animate-fade-in">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-brand-500">💎</span>
+                                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">기록 완성도</span>
+                                </div>
+                                <span className="text-sm font-extrabold text-brand-600">{calcQualityScore({
+                                    answerCount: finalAnswers.length,
+                                    totalLength: finalAnswers.reduce((s, a) => s + a.answer.length, 0),
+                                    imageCount: imageFile ? 1 : 0,
+                                    evidenceCount: proofDrafts.filter(p => p.url.trim() !== '').length,
+                                    hasImpact: impactValue.trim().length > 0,
+                                    competencyCount: competencyDrafts.length
+                                })}%</span>
+                            </div>
+                            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-brand-500 transition-all duration-1000 ease-out rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                                    style={{ width: `${calcQualityScore({
+                                        answerCount: finalAnswers.length,
+                                        totalLength: finalAnswers.reduce((s, a) => s + a.answer.length, 0),
+                                        imageCount: imageFile ? 1 : 0,
+                                        evidenceCount: proofDrafts.filter(p => p.url.trim() !== '').length,
+                                        hasImpact: impactValue.trim().length > 0,
+                                        competencyCount: competencyDrafts.length
+                                    })}%` }}
+                                />
+                            </div>
+                            <p className="text-[10px] text-gray-400 mt-2">더 꼼꼼하게 채울수록 실무 활용도가 높아져요!</p>
+                        </div>
+                    )}
+
                     {/* trust 배지 */}
                     {xpResult && (
-                        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 ${trustInfo.bg}`}>
+                        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 shadow-sm border border-black/5 ${trustInfo.bg}`}>
                             <span>{trustInfo.icon}</span>
-                            <span className={`text-sm font-bold ${trustInfo.color}`}>신뢰도: {trustInfo.label}</span>
+                            <span className={`text-sm font-bold ${trustInfo.color}`}>신뢰도 {trustInfo.label}</span>
                         </div>
                     )}
 

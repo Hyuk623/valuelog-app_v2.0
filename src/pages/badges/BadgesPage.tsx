@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { getLevelFromXP } from '@/types';
 import type { Badge, UserBadge } from '@/types';
 
 export function BadgesPage() {
-    const { userBadges } = useAuthStore();
+    const { totalXP, userBadges } = useAuthStore();
     const [allBadges, setAllBadges] = useState<Badge[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -22,6 +23,8 @@ export function BadgesPage() {
     const earned = allBadges.filter((b) => earnedIds.has(b.id));
     const locked = allBadges.filter((b) => !earnedIds.has(b.id));
 
+    const levelInfo = getLevelFromXP(totalXP);
+
     const getCriteriaText = (badge: Badge): string => {
         const c = badge.criteria;
         if (c.type === 'streak') return `${c.value}일 연속 기록`;
@@ -33,24 +36,36 @@ export function BadgesPage() {
 
     return (
         <div className="flex flex-col min-h-full bg-surface-2 transition-colors duration-300">
-            {/* Header */}
-            <div className="bg-surface px-5 pt-12 pb-5 border-b border-border transition-colors">
-                <h1 className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 transition-colors">배지</h1>
-                <p className="text-gray-400 dark:text-gray-500 text-sm mt-1 transition-colors">
-                    {earned.length} / {allBadges.length}개 획득
-                </p>
-
-                {/* Progress */}
-                {allBadges.length > 0 && (
-                    <div className="mt-3">
-                        <div className="h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden transition-colors">
-                            <div
-                                className="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full transition-all duration-700"
-                                style={{ width: `${Math.round((earned.length / allBadges.length) * 100)}%` }}
-                            />
-                        </div>
+            {/* Header / Level Summary */}
+            <div className="bg-surface px-6 pt-14 pb-8 border-b border-border transition-colors relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
+                
+                <p className="text-sm font-bold text-brand-500 mb-1">성장 기록</p>
+                <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 transition-colors uppercase italic tracking-tight">{levelInfo.label}</h1>
+                
+                <div className="mt-6 space-y-2">
+                    <div className="flex justify-between items-end">
+                        <span className="text-sm font-bold text-gray-400">Level {levelInfo.level}</span>
+                        <span className="text-xs font-black text-brand-600">{totalXP} / {levelInfo.nextXP} XP</span>
                     </div>
-                )}
+                    <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden p-0.5 border border-border transition-colors">
+                        <div
+                            className="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+                            style={{ width: `${Math.min(100, Math.max(5, ((totalXP - levelInfo.currentXP) / (levelInfo.nextXP - levelInfo.currentXP)) * 100))}%` }}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-4 mt-8">
+                    <div className="flex-1 bg-surface-2 dark:bg-gray-800/40 p-3 rounded-2xl border border-border transition-colors">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">획득 배지</p>
+                        <p className="text-lg font-black text-gray-900 dark:text-gray-100">{earned.length} <span className="text-xs font-bold text-gray-400">/ {allBadges.length}</span></p>
+                    </div>
+                    <div className="flex-1 bg-surface-2 dark:bg-gray-800/40 p-3 rounded-2xl border border-border transition-colors">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">상위 퍼센트</p>
+                        <p className="text-lg font-black text-gray-900 dark:text-gray-100">Top 5% <span className="text-xs font-bold text-gray-400">🚀</span></p>
+                    </div>
+                </div>
             </div>
 
             <div className="px-5 py-5 space-y-6">

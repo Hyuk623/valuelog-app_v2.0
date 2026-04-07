@@ -7,11 +7,11 @@ import { useUIStore, FontSize, Theme } from '@/store/uiStore';
 import { downloadJSON } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { getLevelFromXP } from '@/types';
-import { LogOut, Download, ChevronRight, User, Target, Star, Shield, Trash2, FileText, Moon, Sun, Lightbulb } from 'lucide-react';
+import { LogOut, Download, ChevronRight, User, Target, Star, Shield, Trash2, FileText, Moon, Sun, Lightbulb, Award } from 'lucide-react';
 
 export function SettingsPage() {
     const navigate = useNavigate();
-    const { user, profile, totalXP, signOut, dominantCategory, fetchProfile } = useAuthStore();
+    const { user, profile, totalXP, signOut, dominantCategory, fetchProfile, userBadges } = useAuthStore();
     const { fontSize, setFontSize, theme, setTheme } = useUIStore();
     const [exporting, setExporting] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -154,6 +154,12 @@ export function SettingsPage() {
                                 setEditingGoal(profile?.weekly_goal ?? 3);
                                 setShowGoalModal(true);
                             }}
+                        />
+                        <SettingItem
+                            icon={<Award size={18} className="text-brand-500" />}
+                            label="획득한 배지"
+                            value={`${userBadges.length}개`}
+                            onClick={() => navigate('/badges')}
                         />
                         <SettingItem
                             icon={<User size={18} className="text-brand-500" />}

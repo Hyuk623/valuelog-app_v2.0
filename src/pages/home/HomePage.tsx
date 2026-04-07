@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Star, Trophy, ChevronRight, Plus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function HomePage() {
     const { profile, dailyProgress, totalXP, userBadges, user, dominantCategory, frequentCategories } = useAuthStore();
@@ -139,11 +140,82 @@ export function HomePage() {
                     <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/10 rounded-full" />
                 </div>
 
+                {/* Level Progress Bar (Featured) */}
+                <div className="bg-surface dark:bg-surface-3 rounded-2xl p-4 border border-border shadow-sm transition-colors mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                        {/* Indicator: Label */}
+                        <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white text-lg font-black italic shadow-lg shadow-brand-500/20">
+                                {levelInfo.level}
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">현재 레벨</p>
+                                <p className="font-black text-gray-900 dark:text-gray-100 text-[14px] leading-tight truncate uppercase italic">{levelInfo.label}</p>
+                            </div>
+                        </div>
+                        {/* Indicator: Percentage */}
+                        <div className="text-right">
+                            <p className="text-[10px] font-bold text-brand-500 uppercase">{progressPct}%</p>
+                            <p className="text-[11px] font-bold text-gray-400">{totalXP} / {levelInfo.nextXP} XP</p>
+                        </div>
+                    </div>
+                    <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden p-0.5 border border-border transition-colors">
+                        <div
+                            className="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(59,130,246,0.3)]"
+                            style={{ width: `${progressPct}%` }}
+                        />
+                    </div>
+                </div>
+
                 {/* Stats Row */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3 mb-3">
                     <StatCard icon="🔥" label="스트릭" value={`${streak}일`} color="orange" />
-                    <StatCard icon="⭐" label="총 XP" value={`${totalXP}`} color="yellow" />
-                    <StatCard icon="🏅" label="배지" value={`${userBadges.length}개`} color="purple" />
+                    <StatCard icon="⭐" label="총 XP" value={`${totalXP}`} color="yellow" onClick={() => navigate('/stats')} />
+                </div>
+
+                {/* Badge Section (Revamped) */}
+                <div 
+                    onClick={() => navigate('/badges')}
+                    className="group bg-surface dark:bg-surface-3 rounded-2xl px-5 py-4 border border-border shadow-sm transition-all duration-300 hover:shadow-md hover:border-brand-200 active:scale-[0.99] cursor-pointer mb-8 relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full -mr-12 -mt-12 blur-2xl pointer-events-none group-hover:bg-purple-500/10 transition-all" />
+                    
+                    <div className="flex items-center justify-between relative z-10">
+                        <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-2xl shadow-inner">
+                                🏅
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest leading-none mb-1">Badge Collection</p>
+                                <h3 className="font-black text-gray-900 dark:text-gray-100 text-[16px] leading-tight">
+                                    총 {userBadges.length}개의 배지 획득
+                                </h3>
+                            </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover:text-brand-500 group-hover:bg-brand-50 transition-all">
+                            <ChevronRight size={18} />
+                        </div>
+                    </div>
+
+                    {/* Badge Previews */}
+                    {userBadges.length > 0 && (
+                        <div className="flex gap-2 mt-4 relative z-10">
+                            {userBadges.slice(0, 6).map((ub, idx) => (
+                                <div 
+                                    key={idx} 
+                                    className="w-9 h-9 rounded-xl bg-surface-2 dark:bg-gray-800 flex items-center justify-center text-lg shadow-sm border border-border/50 group-hover:scale-110 transition-transform duration-300"
+                                    style={{ transitionDelay: `${idx * 50}ms` }}
+                                >
+                                    {ub.badge?.icon || '🏅'}
+                                </div>
+                            ))}
+                            {userBadges.length > 6 && (
+                                <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-[10px] font-black text-gray-400 border border-dashed border-gray-300">
+                                    +{userBadges.length - 6}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Weekly Goal */}
@@ -219,17 +291,25 @@ export function HomePage() {
     );
 }
 
-function StatCard({ icon, label, value, color }: { icon: string; label: string; value: string; color: string }) {
+function StatCard({ icon, label, value, color, onClick }: { icon: string; label: string; value: string; color: string; onClick?: () => void }) {
     const colors: Record<string, string> = {
-        orange: 'bg-orange-50 text-orange-600 dark:bg-orange-950/20 dark:text-orange-400',
-        yellow: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950/20 dark:text-yellow-400',
-        purple: 'bg-purple-50 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400',
+        orange: 'bg-orange-50 text-orange-600 dark:bg-orange-950/20 dark:text-orange-400 border-orange-100 dark:border-orange-900/10',
+        yellow: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950/20 dark:text-yellow-400 border-yellow-100 dark:border-yellow-900/10',
+        purple: 'bg-purple-50 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 border-purple-100 dark:border-purple-900/10',
     };
+    
     return (
-        <div className={`rounded-2xl p-4 text-center border border-transparent transition-all duration-300 ${colors[color] ?? 'bg-surface-2'}`}>
+        <div 
+            onClick={onClick} 
+            className={cn(
+                "rounded-2xl p-4 text-center border transition-all duration-300",
+                colors[color] ?? "bg-surface-2",
+                onClick ? "cursor-pointer hover:scale-105 active:scale-95 shadow-sm hover:shadow-md" : ""
+            )}
+        >
             <div className="text-2xl mb-1">{icon}</div>
-            <div className="font-extrabold text-lg leading-tight">{value}</div>
-            <div className="text-xs opacity-70 mt-0.5">{label}</div>
+            <div className="font-extrabold text-lg leading-tight uppercase tabular-nums">{value}</div>
+            <div className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">{label}</div>
         </div>
     );
 }
