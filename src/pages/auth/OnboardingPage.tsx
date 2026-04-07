@@ -53,7 +53,7 @@ export function OnboardingPage() {
         }
 
         await fetchProfile(user.id);
-        // 첫 가입 후 바로 튜토리얼 퀘스트로 유도합니다.
+        // 첫 가입 후 바로 튜토리얼 기록으로 유도합니다.
         navigate('/quest', { state: { category: 'daily', isTutorial: true }, replace: true });
     };
 

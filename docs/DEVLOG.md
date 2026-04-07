@@ -1,5 +1,14 @@
 # Development Log (ValueLog V2)
 
+### 2026-04-07 - 활용도 점수(Quality Score) 도입 및 기록 자산화 가이드 구현 (Phase 4)
+- 요청 목적: 사용자들이 본인의 기록이 나중에 얼마나 활용 가능한지(재사용성) 파악하고, 더 나은 기록을 남기도록 부드럽게 유도하기 위함.
+- 수행 내용: `src/lib/quality.ts` 개발, `QuestPage` 저장 로직에 반영, `TimelinePage`에 완성도 뱃지 추가, `ExperienceDetailPage`에 게이지 및 가이드 팁 추가, `StatsPage` 평균 완성도 지표 추가. `SUPABASE_PATCH_v2.5_quality.sql` 생성.
+- 수정 파일: `src/lib/quality.ts`, `src/pages/quest/QuestPage.tsx`, `src/pages/timeline/TimelinePage.tsx`, `src/pages/timeline/ExperienceDetailPage.tsx`, `src/pages/stats/StatsPage.tsx`, `docs/SUPABASE_PATCH_v2.5_quality.sql`
+- 핵심 변경: '신뢰도(Trust)'와 별개로 기록의 '완성도(Quality)'를 측정하여 유저에게 자발적 개선 동기 부여.
+- 확인 결과: 배포 완료. 상세 페이지 게이지 및 실시간 재계산 로직 정상 동작.
+- 이슈/리스크: 없음
+- 다음 작업: 서비스 고도화 및 추가 기능 검토.
+
 ### 2026-04-04 (2) - 투명성 모델(Audit Log) 기반 경험 기록 스냅샷 뷰어 구축
 - 요청 목적: 작성자가 내용을 자유롭게 수정할 수 있도록 하되, 이전 이력을 보존하여 외부 열람자 사이의 기록 '신뢰성(Trust)'을 유지하기 위함.
 - 수행 내용: `experience_edit_logs` Supabase DDL SQL 생성. `ExperienceEditPage` 저장 시 변경 이전 원본을 JSON 묶음으로 INSERT 처리. `ExperienceDetailPage`에 '(수정됨)' 마크 및 전체 내역 뷰어(모달) 추가. 

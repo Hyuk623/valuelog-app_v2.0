@@ -92,7 +92,7 @@ export function HomePage() {
                     onClick={() => {
                         if (!isCompleted) {
                             const isTutorial = localStorage.getItem('tutorial_done') !== 'true';
-                            navigate('/quest', { state: { category: 'daily', isTutorial } });
+                            navigate('/quest', { state: { isTutorial } });
                         }
                     }}
                     className={`relative overflow-hidden rounded-3xl p-6 cursor-pointer transition-all duration-200 active:scale-95 ${isCompleted
@@ -103,31 +103,31 @@ export function HomePage() {
                     <div className="relative z-10">
                         <div className="flex items-center gap-2 mb-3">
                             <span className="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">
-                                {isCompleted ? '✅ 완료' : '⚡ 오늘의 퀘스트'}
+                                {isCompleted ? '✅ 오늘 기록 완료' : '⚡ 내 경험 기록하기'}
                             </span>
                         </div>
 
                         {isCompleted ? (
                             <>
-                                <h2 className="text-white text-xl font-extrabold mb-1">오늘 퀘스트 완료!</h2>
-                                <p className="text-white/80 text-sm">정말 대단해요 🎉</p>
-                                <p className="text-white/70 text-xs mt-3">내일도 연속 기록에 도전해봐요</p>
+                                <h2 className="text-white text-xl font-extrabold mb-1">오늘의 기록이 보관되었습니다!</h2>
+                                <p className="text-white/80 text-sm">나의 경험이 소중한 자산으로 남았어요 🎉</p>
+                                <p className="text-white/70 text-xs mt-3">내일도 꾸준히 연속 기록을 이어가요</p>
                             </>
                         ) : (
                             <>
-                                <h2 className="text-white text-xl font-extrabold mb-1">오늘의 퀘스트를 완료해 볼까요?</h2>
-                                <p className="text-white/80 text-sm">짧게 몇 문항만 답하면 끝 ✨</p>
-                                <div className="flex items-center gap-4 mt-4">
-                                    <div className="flex items-center gap-1.5 bg-white/20 rounded-xl px-3 py-1.5">
-                                        <span className="text-xp-400 text-sm">⭐</span>
-                                        <span className="text-white text-sm font-bold">+20 XP</span>
+                                <h2 className="text-white text-xl font-extrabold mb-1">오늘 어떤 경험을 하셨나요?</h2>
+                                <p className="text-white/80 text-sm">가볍게 답하고 언제든 꺼내볼 수 있는 자산으로 남겨요 ✨</p>
+                                <div className="flex flex-wrap items-center gap-2 mt-4">
+                                    <div className="flex items-center gap-1 bg-white/20 rounded-xl px-2.5 py-1.5 whitespace-nowrap">
+                                        <span className="text-xp-400 text-[13px]">⭐</span>
+                                        <span className="text-white text-[13px] font-bold">+20 XP</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5 bg-white/20 rounded-xl px-3 py-1.5">
-                                        <span className="text-sm">🔥</span>
-                                        <span className="text-white text-sm font-bold">스트릭</span>
+                                    <div className="flex items-center gap-1 bg-white/20 rounded-xl px-2.5 py-1.5 whitespace-nowrap">
+                                        <span className="text-[13px]">🔥</span>
+                                        <span className="text-white text-[13px] font-bold">스트릭</span>
                                     </div>
-                                    <div className="ml-auto bg-white text-brand-600 rounded-2xl px-5 py-2.5 font-bold text-sm flex items-center gap-1.5">
-                                        시작 <ChevronRight size={16} />
+                                    <div className="ml-auto bg-white text-brand-600 rounded-2xl px-4 py-2 font-bold text-[13px] flex items-center gap-0.5 whitespace-nowrap shadow-sm">
+                                        기록하기 <ChevronRight size={16} />
                                     </div>
                                 </div>
                             </>

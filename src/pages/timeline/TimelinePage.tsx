@@ -10,9 +10,10 @@ import { ChevronRight, Search } from 'lucide-react';
 export function TimelinePage() {
     const { user } = useAuthStore();
     const navigate = useNavigate();
-    const [experiences, setExperiences] = useState<Experience[]>([]);
+    const [experiences, setExperiences] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>('all');
+    const [tagFilter, setTagFilter] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
 
     const fetchExperiences = async () => {
@@ -20,10 +21,10 @@ export function TimelinePage() {
         setLoading(true);
         const { data } = await supabase
             .from('experiences')
-            .select('*')
+            .select('*, answers:experience_answers(answer), evidence:evidence_items(id), competencies:experience_competencies(id)')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
-        setExperiences((data as Experience[]) ?? []);
+        setExperiences(data ?? []);
         setLoading(false);
     };
 
@@ -36,15 +37,22 @@ export function TimelinePage() {
         // 1. 카테고리 필터
         if (filter !== 'all' && exp.category !== filter) return false;
 
-        // 2. 검색어 필터 (제목, 요약, 카테고리 이름)
+        // 2. 태그(속성) 필터
+        if (tagFilter === 'evidence' && (!exp.evidence || exp.evidence.length === 0)) return false;
+        if (tagFilter === 'impact' && !exp.impact_signal) return false;
+        if (tagFilter === 'competency' && (!exp.competencies || exp.competencies.length === 0)) return false;
+
+        // 3. 검색어 필터 (제목, 요약, 카테고리 이름, 상세 답변, 임팩트)
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
             const catLabel = CATEGORIES[exp.category]?.label || '';
             const matchesTitle = exp.title.toLowerCase().includes(query);
             const matchesSummary = exp.summary?.toLowerCase().includes(query);
             const matchesCategory = catLabel.toLowerCase().includes(query);
+            const matchesImpact = exp.impact_signal?.value.toLowerCase().includes(query);
+            const matchesAnswers = exp.answers?.some((a: any) => a.answer.toLowerCase().includes(query));
 
-            if (!matchesTitle && !matchesSummary && !matchesCategory) {
+            if (!matchesTitle && !matchesSummary && !matchesCategory && !matchesImpact && !matchesAnswers) {
                 return false;
             }
         }
@@ -65,7 +73,11 @@ export function TimelinePage() {
             {/* Header */}
             <div className="bg-surface px-5 pt-12 pb-4 border-b border-border transition-colors">
                 <h1 className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 transition-colors">내 기록</h1>
-                <p className="text-gray-400 dark:text-gray-500 text-sm mt-1 transition-colors">총 {experiences.length}개의 기록</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-1 transition-colors">총 {experiences.length}개의 기록이 안전하게 보관 중입니다.</p>
+                <div className="flex items-center gap-3 mt-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+                    <span className="flex items-center gap-1"><span className="text-blue-500">🔗</span> 증빙 포함 {experiences.filter(e => e.evidence?.length > 0).length}개</span>
+                    <span className="flex items-center gap-1"><span className="text-orange-500">📈</span> 성과 기록 {experiences.filter(e => e.impact_signal).length}개</span>
+                </div>
 
                 {/* Search Bar */}
                 <div className="mt-4 relative">
@@ -83,7 +95,13 @@ export function TimelinePage() {
             </div>
 
             {/* Filter */}
-            <div className="bg-surface px-5 py-3 border-b border-border transition-colors">
+            <div className="bg-surface px-5 py-3 border-b border-border transition-colors overflow-x-auto hide-scrollbar">
+                <div className="flex gap-2 w-max mb-3">
+                    <button onClick={() => setTagFilter('all')} className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${tagFilter === 'all' ? 'bg-brand-500 text-white border-brand-500' : 'bg-surface border-border text-gray-500'}`}>모든 기록</button>
+                    <button onClick={() => setTagFilter('evidence')} className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${tagFilter === 'evidence' ? 'bg-blue-500 text-white border-blue-500' : 'bg-surface border-border text-gray-500'}`}>🔗 증빙 있음</button>
+                    <button onClick={() => setTagFilter('impact')} className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${tagFilter === 'impact' ? 'bg-orange-500 text-white border-orange-500' : 'bg-surface border-border text-gray-500'}`}>📈 성과/임팩트</button>
+                    <button onClick={() => setTagFilter('competency')} className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${tagFilter === 'competency' ? 'bg-brand-500 text-white border-brand-500' : 'bg-surface border-border text-gray-500'}`}>💡 역량 평가됨</button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => setFilter('all')}
@@ -120,14 +138,14 @@ export function TimelinePage() {
                             {searchQuery ? '검색 결과가 없어요' : '아직 기록이 없어요'}
                         </p>
                         <p className="text-gray-400 dark:text-gray-500 text-sm mb-6 transition-colors">
-                            {searchQuery ? '다른 검색어를 입력해 보세요.' : '오늘의 퀘스트를 시작해 보세요!'}
+                            {searchQuery ? '다른 검색어를 입력해 보세요.' : '오늘의 경험을 기록해 보세요!'}
                         </p>
                         {!searchQuery && (
                             <button
                                 onClick={() => navigate('/quest')}
-                                className="bg-brand-500 text-white px-6 py-3 rounded-2xl font-semibold"
+                                className="mt-4 px-6 py-2.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-bold rounded-xl transition-colors shadow-sm"
                             >
-                                퀘스트 시작하기
+                                기록 시작하기
                             </button>
                         )}
                     </div>
@@ -155,7 +173,14 @@ export function TimelinePage() {
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="font-bold text-gray-900 dark:text-gray-100 truncate transition-colors">{exp.title}</p>
-                                                        <p className="text-sm text-gray-400 dark:text-gray-500 transition-colors">{cat.label}</p>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <p className="text-sm text-gray-400 dark:text-gray-500 transition-colors">{cat.label}</p>
+                                                            {exp.quality_score >= 80 ? (
+                                                                <span className="text-[10px] bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 px-1.5 py-0.5 rounded font-bold">완성도 높음 💎</span>
+                                                            ) : exp.quality_score > 0 ? (
+                                                                <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">완성도 {exp.quality_score}%</span>
+                                                            ) : null}
+                                                        </div>
                                                     </div>
                                                     <div className="flex flex-col items-end gap-1">
                                                         <span className="text-xs font-bold text-xp-600 dark:text-xp-400 bg-xp-50 dark:bg-xp-950/20 px-2 py-0.5 rounded-full">+{exp.xp_earned}XP</span>

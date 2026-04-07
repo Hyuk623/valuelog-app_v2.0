@@ -92,7 +92,7 @@ export function BadgesPage() {
                             <div className="flex flex-col items-center justify-center py-20 text-center">
                                 <div className="text-5xl mb-4">🏅</div>
                                 <p className="font-bold text-gray-700 dark:text-gray-300 mb-1">배지를 불러오는 중이에요</p>
-                                <p className="text-gray-400 dark:text-gray-500 text-sm">퀘스트를 완료하면 배지를 획득할 수 있어요!</p>
+                                <p className="text-gray-400 dark:text-gray-500 text-sm">경험을 꼬박꼬박 기록하면 배지를 획득할 수 있어요!</p>
                             </div>
                         )}
                     </>

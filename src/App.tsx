@@ -17,6 +17,7 @@ import { ExperienceEditPage } from '@/pages/timeline/ExperienceEditPage';
 import { BadgesPage } from '@/pages/badges/BadgesPage';
 import { StatsPage } from '@/pages/stats/StatsPage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
+import { ConvertPage } from '@/pages/convert/ConvertPage';
 
 function AppRouter() {
   const { user, profile, loading, initialized, initialize } = useAuthStore();
@@ -73,6 +74,7 @@ function AppRouter() {
         <Route path="/timeline/:id/edit" element={<ExperienceEditPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/badges" element={<BadgesPage />} />
+        <Route path="/convert" element={<ConvertPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

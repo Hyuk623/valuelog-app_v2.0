@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import { CATEGORIES, XP_PER_QUEST, getLocalDateKST } from '@/types';
 import type { PromptSet, PromptStep, QuestAnswer, NewlyEarnedBadge, ExperienceCompetency } from '@/types';
 import { COMPETENCIES, calcCompetencyLevel, calcTrust, calcXPBonus, TRUST_LABELS } from '@/lib/competencies';
+import { calcQualityScore } from '@/lib/quality';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, X, ImagePlus, Plus, Trash2, CheckSquare, Square } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
@@ -87,9 +88,10 @@ const BUILTIN_PROMPTS: Record<string, PromptStep[]> = {
 
 async function uploadImage(file: File, userId: string): Promise<string | null> {
     const ext = file.name.split('.').pop() ?? 'jpg';
-    const { error } = await supabase.storage.from('experience-images').upload(`${userId}/${Date.now()}.${ext}`, file);
+    const filename = `${userId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('experience-images').upload(filename, file);
     if (error) { console.warn('Image upload skipped:', error.message); return null; }
-    const { data: { publicUrl } } = supabase.storage.from('experience-images').getPublicUrl(`${userId}/${Date.now()}.${ext}`);
+    const { data: { publicUrl } } = supabase.storage.from('experience-images').getPublicUrl(filename);
     return publicUrl;
 }
 
@@ -137,37 +139,40 @@ export function QuestPage() {
 
     const [savedExpId, setSavedExpId] = useState<string | null>(null);
 
-    // VisualViewport API: iOS/Android keyboard handling
+    // Telegram/Discord-style Bulletproof Mobile Keyboard Tracker
     useEffect(() => {
         if (stage !== 'answering') return;
 
-        const applyViewport = () => {
+        const updateViewport = () => {
+            if (!chatContainerRef.current) return;
             const vv = window.visualViewport;
-            if (!vv || !chatContainerRef.current) return;
-            // The container is position: fixed. 
-            // - `top` offsets by visualViewport.offsetTop to counter layout scroll
-            // - `height` matches visualViewport.height exactly
-            chatContainerRef.current.style.height = `${vv.height}px`;
-            chatContainerRef.current.style.top = `${vv.offsetTop}px`;
-
-            // Also ensure we are scrolled down in the chat
-            const container = chatMessagesRef.current;
-            if (container) {
-                container.scrollTop = container.scrollHeight;
-            }
+            // 뷰포트의 실제 높이와, 사파리가 화면을 위로 밀어올린 만큼의 offsetTop을 구합니다.
+            const h = vv ? vv.height : window.innerHeight;
+            const y = vv ? vv.offsetTop : 0;
+            
+            chatContainerRef.current.style.height = `${h}px`;
+            // 사파리가 화면을 위로 밀어올려도, 그만큼 아래로 translateY 시켜서 시각적으로 고정시킵니다.
+            chatContainerRef.current.style.transform = `translateY(${y}px)`;
+            
+            // 키보드가 올라오는 동안 채팅창 최하단 유지
+            setTimeout(scrollToBottom, 50);
         };
 
-        window.visualViewport?.addEventListener('resize', applyViewport);
-        window.visualViewport?.addEventListener('scroll', applyViewport);
+        window.visualViewport?.addEventListener('resize', updateViewport);
+        window.visualViewport?.addEventListener('scroll', updateViewport);
+        window.addEventListener('scroll', updateViewport);
+        
+        updateViewport();
 
-        applyViewport();
-        // Additional apply in case software keyboard animations are still running
-        const timer = setTimeout(applyViewport, 300);
+        // 바디 바운스 효과 차단
+        const originalOverscroll = document.body.style.overscrollBehavior;
+        document.body.style.overscrollBehavior = 'none';
 
         return () => {
-            clearTimeout(timer);
-            window.visualViewport?.removeEventListener('resize', applyViewport);
-            window.visualViewport?.removeEventListener('scroll', applyViewport);
+            window.visualViewport?.removeEventListener('resize', updateViewport);
+            window.visualViewport?.removeEventListener('scroll', updateViewport);
+            window.removeEventListener('scroll', updateViewport);
+            document.body.style.overscrollBehavior = originalOverscroll;
         };
     }, [stage]);
 
@@ -282,10 +287,20 @@ export function QuestPage() {
         }
 
         try {
+            const totalLength = finalAnswers.reduce((sum, a) => sum + a.answer.length, 0);
+            const initialQuality = calcQualityScore({
+                answerCount: finalAnswers.length,
+                totalLength,
+                imageCount: imageUrls.length,
+                evidenceCount: 0,
+                hasImpact: false,
+                competencyCount: 0
+            });
+
             const { data: exp, error: expErr } = await supabase.from('experiences').insert({
                 user_id: user.id, local_date: today, category: promptSet.category,
                 title, structured, xp_earned: XP_PER_QUEST, image_urls: imageUrls,
-                trust_score: 0, trust_label: 'self',
+                trust_score: 0, trust_label: 'self', quality_score: initialQuality,
             }).select().single();
             if (expErr) throw expErr;
 
@@ -361,9 +376,20 @@ export function QuestPage() {
                 growthIndex = Number((levels.reduce((a, b) => a + b, 0) / levels.length).toFixed(1));
             }
 
+            const totalLength = finalAnswers.reduce((sum, a) => sum + a.answer.length, 0);
+            const enrichQuality = calcQualityScore({
+                answerCount: finalAnswers.length,
+                totalLength,
+                imageCount: imageFile ? 1 : 0,
+                evidenceCount: validProofs.length,
+                hasImpact: hasImpact,
+                competencyCount: validComps.length
+            });
+
             await supabase.from('experiences').update({
                 trust_score: trustResult.score,
                 trust_label: trustResult.label,
+                quality_score: enrichQuality,
                 xp_earned: xpBonus.total,
                 growth_index: growthIndex
             }).eq('id', savedExpId);
@@ -403,6 +429,8 @@ export function QuestPage() {
     };
 
     const checkAndAwardBadges = async (userId: string, streak: number, answers: QuestAnswer[], growthStreak: number): Promise<NewlyEarnedBadge[]> => {
+        const { data: userExps } = await supabase.from('experiences').select('id').eq('user_id', userId);
+        const expIds = userExps?.map(e => e.id) || [];
         const [{ data: allBadges }, { data: userBadges }, { data: totalExp }, { data: xpData }, { data: catData }, { data: evidenceData }, { data: impactData }, { data: compData }] = await Promise.all([
             supabase.from('badges').select('*'),
             supabase.from('user_badges').select('badge_id').eq('user_id', userId),
@@ -411,7 +439,7 @@ export function QuestPage() {
             supabase.from('experiences').select('category').eq('user_id', userId),
             supabase.from('experiences').select('id', { count: 'exact' }).eq('user_id', userId).neq('trust_label', 'self'),
             supabase.from('experiences').select('id', { count: 'exact' }).eq('user_id', userId).not('impact_signal', 'is', null),
-            supabase.from('experience_competencies').select('competency_key').eq('experience_id', savedExpId ?? ''),
+            supabase.from('experience_competencies').select('competency_key').in('experience_id', expIds.length > 0 ? expIds : ['']),
         ]);
         const earned = new Set((userBadges ?? []).map((u: { badge_id: string }) => u.badge_id));
         const totalCount = totalExp?.length ?? 0;
@@ -445,7 +473,7 @@ export function QuestPage() {
     const catInfo = CATEGORIES[selectedCategory] ?? CATEGORIES['daily']!;
     const trustInfo = TRUST_LABELS[xpResult?.trustLabel ?? 'self']!;
     return (
-        <div className="flex flex-col bg-surface overflow-hidden" style={{ height: '100dvh', position: 'relative' }}>
+        <div className="flex flex-col bg-surface overflow-hidden w-full h-[100dvh]">
             {/* Header - Only for stages except answering */}
             {stage !== 'answering' && (
                 <div className="px-5 pt-12 pb-4 flex items-center gap-3 border-b border-border transition-colors flex-shrink-0">
@@ -453,7 +481,7 @@ export function QuestPage() {
                         <ChevronLeft size={22} className="text-gray-500 dark:text-gray-400" />
                     </button>
                     <p className={cn("font-semibold text-brand-500", getFontSizeClass('text-sm'))}>
-                        {stage === 'photo' ? '📸 활동 사진' : stage === 'enrichment' ? '✨ 기록 강화하기' : stage === 'completed' ? '퀘스트 완료' : '오늘의 퀘스트'}
+                        {stage === 'photo' ? '📸 활동 사진' : stage === 'enrichment' ? '✨ 기록 강화하기' : stage === 'completed' ? '저장 완료' : '경험 기록하기'}
                     </p>
                 </div>
             )}
@@ -479,40 +507,23 @@ export function QuestPage() {
                 </div>
             )}
 
-            {/* ── Answering ── KakaoTalk-style: Dynamic height/top adjusted by VisualViewport */}
+            {/* ── Answering ── Bulletproof visual viewport fixed layout */}
             {stage === 'answering' && promptSet && step && (
-                <div
-                    ref={chatContainerRef}
-                    className="flex flex-col bg-surface overflow-hidden"
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: '100dvh',
-                        zIndex: 40,
-                    }}
-                >
-                    {/* Header inside fixed container - Compact */}
-                    <div className="px-5 pt-10 pb-3 flex items-center gap-3 border-b border-border flex-shrink-0 transition-colors">
-                        <button onClick={() => navigate(-1)} className="p-1.5 rounded-xl hover:bg-surface-2 transition-colors">
-                            <X size={20} className="text-gray-500 dark:text-gray-400" />
-                        </button>
-                        <p className={cn("font-bold text-brand-500", getFontSizeClass('text-sm'))}>
-                            {catInfo.icon} {catInfo.label}
-                        </p>
-                    </div>
-
-                    {/* Progress bar - Ultra Tightened */}
-                    <div className="px-5 pt-1 pb-1 flex-shrink-0">
-                        <div className="flex gap-1 mb-0.5">
-                            {promptSet.steps.map((_, i) => (
-                                <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < currentStep ? 'bg-brand-500' : i === currentStep ? 'bg-brand-300' : 'bg-surface-2 dark:bg-gray-800'}`} />
-                            ))}
+                <div ref={chatContainerRef} className="flex flex-col bg-surface z-50 shadow-2xl" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh' }}>
+                    {/* Unified Header & Progress - Ultra Compact */}
+                    <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-border flex-shrink-0 bg-surface">
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => navigate(-1)} className="p-1 rounded-xl hover:bg-surface-2 transition-colors">
+                                <X size={20} className="text-gray-500 dark:text-gray-400" />
+                            </button>
+                            <span className={cn("font-bold text-brand-500", getFontSizeClass('text-sm'))}>
+                                {catInfo.icon} {catInfo.label}
+                            </span>
                         </div>
-                        <div className="flex justify-between items-center h-4">
-                            <span className="text-[9px] font-bold text-gray-300 dark:text-gray-600 uppercase tracking-widest transition-colors">Growth Quest</span>
-                            <p className="text-[10px] font-black text-brand-400">{currentStep + 1}/{promptSet.steps.length}</p>
+                        <div className="text-right">
+                            <span className="text-[11px] font-black text-brand-400 tracking-wider">
+                                {currentStep + 1} / {promptSet.steps.length}
+                            </span>
                         </div>
                     </div>
 
@@ -571,7 +582,9 @@ export function QuestPage() {
                                     adjustTextareaHeight();
                                 }}
                                 onFocus={() => {
-                                    setTimeout(scrollToBottom, 300);
+                                    setTimeout(() => {
+                                        scrollToBottom();
+                                    }, 100);
                                 }}
                                 placeholder={step.placeholder}
                                 rows={1}
@@ -655,8 +668,8 @@ export function QuestPage() {
             {stage === 'enrichment' && (
                 <div className="flex-1 flex flex-col bg-surface animate-fade-in overflow-hidden transition-colors">
                     <div className="px-5 pt-4 pb-2">
-                        <h2 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 transition-colors">기록을 강화하세요 ✨</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 transition-colors">추가할수록 신뢰도 배지와 XP 보너스를 받아요</p>
+                        <h2 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 transition-colors">이 기록의 가치를 높이세요 ✨</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 transition-colors">증빙 자료나 성과를 추가하면 나중에 다시 꺼내 쓰기 더 좋은 자산이 됩니다.</p>
 
                         {isTutorial && enrichmentTab === 'proof' && (
                             <TutorialBubble text="기록을 증명할 수 있는 것들을\n추가해볼까요? 우선 탭들을 훑어보세요." pointer="top" className="top-full mt-2 left-5 z-50" />
@@ -784,8 +797,8 @@ export function QuestPage() {
             {stage === 'completed' && (
                 <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 text-center overflow-y-auto bg-surface transition-colors">
                     <div className="text-7xl mb-4">🎉</div>
-                    <h2 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-2 transition-colors">퀘스트 완료!</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-6 transition-colors">오늘도 한 걸음 성장했어요</p>
+                    <h2 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-2 transition-colors">성공적으로 기록되었습니다!</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 transition-colors">나의 소중한 경험이 변치 않는 자산으로 쌓였습니다.</p>
 
                     {isTutorial && (
                         <TutorialBubble text="축하합니다! 첫 기록을 무사히 마쳤네요.\n이제 홈 화면에서 나의 성장을 확인해보세요!" pointer="bottom" className="bottom-full mb-4 left-1/2 -translate-x-1/2 z-50" />

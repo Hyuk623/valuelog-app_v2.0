@@ -6,9 +6,10 @@ import { useAuthStore } from '@/store/authStore';
 import { CATEGORIES } from '@/types';
 import type { Experience, ExperienceAnswer, EvidenceItem, ExperienceCompetency, Skill, ExperienceSkill, ExperienceEditLog } from '@/types';
 import { formatDateTime } from '@/lib/utils';
-import { ChevronLeft, Trash2, Edit3, ExternalLink, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2, Edit3, ExternalLink, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { TRUST_LABELS, COMPETENCY_MAP } from '@/lib/competencies';
+import { calcQualityScore, getQualityImprovementTips } from '@/lib/quality';
 
 const STEP_LABELS: Record<string, string> = {
     activity: '활동', topic: '주제', task: '업무', goal: '목표', highlight: '하이라이트',
@@ -45,6 +46,9 @@ export function ExperienceDetailPage() {
     const [selectedSkill, setSelectedSkill] = useState('');
     const [addingSkill, setAddingSkill] = useState(false);
 
+    // 연관 기록
+    const [relatedRecords, setRelatedRecords] = useState<Experience[]>([]);
+
     const fetchData = async () => {
         if (!id || !user) return;
         setLoading(true);
@@ -64,6 +68,18 @@ export function ExperienceDetailPage() {
         setExperienceSkills((expSkills as ExperienceSkill[]) ?? []);
         setAllSkills((skills as Skill[]) ?? []);
         setEditLogs((logs as ExperienceEditLog[]) ?? []);
+        
+        if (exp) {
+            const { data: related } = await supabase.from('experiences')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('category', (exp as Experience).category)
+                .neq('id', id)
+                .order('created_at', { ascending: false })
+                .limit(3);
+            setRelatedRecords(related as Experience[] ?? []);
+        }
+
         setLoading(false);
     };
 
@@ -72,13 +88,70 @@ export function ExperienceDetailPage() {
     }, [id, user]);
 
     const handleDelete = async () => {
-        if (!id || !user) return;
+        if (!id || !user || !experience) return;
         setDeleting(true);
+        const expDate = experience.local_date;
+        const xpEarned = experience.xp_earned || 20;
+
         await supabase.from('evidence_items').delete().eq('experience_id', id);
         await supabase.from('experience_competencies').delete().eq('experience_id', id);
         await supabase.from('experience_answers').delete().eq('experience_id', id);
         await supabase.from('experiences').delete().eq('id', id).eq('user_id', user.id);
+
+        // Daily Progress Revert Logic
+        const { data: remainingExps } = await supabase.from('experiences').select('id').eq('user_id', user.id).eq('local_date', expDate);
+        const { data: currentDp } = await supabase.from('daily_progress').select('*').eq('user_id', user.id).eq('local_date', expDate).single();
+        
+        if (currentDp) {
+            if (!remainingExps || remainingExps.length === 0) {
+                const d = new Date(expDate);
+                d.setDate(d.getDate() - 1);
+                const prevDateStr = d.toISOString().split('T')[0];
+                const { data: yDay } = await supabase.from('daily_progress').select('*').eq('user_id', user.id).eq('local_date', prevDateStr).single();
+                
+                await supabase.from('daily_progress').update({
+                    completed: false,
+                    xp_total: 0,
+                    streak_count: yDay?.completed ? (yDay.streak_count ?? 0) : 0,
+                    growth_completed: false,
+                    growth_streak_count: yDay?.growth_completed ? (yDay.growth_streak_count ?? 0) : 0,
+                    last_completed_date: yDay?.completed ? prevDateStr : null,
+                    last_growth_completed_date: yDay?.growth_completed ? prevDateStr : null
+                }).eq('id', currentDp.id);
+            } else {
+                const newXp = Math.max(0, (currentDp.xp_total ?? 0) - xpEarned);
+                const hasGrowth = (await supabase.from('experiences').select('id', { count: 'exact' }).eq('user_id', user.id).eq('local_date', expDate).neq('trust_label', 'self')).count ?? 0;
+                
+                const updates: any = { xp_total: newXp };
+                if (hasGrowth === 0 && currentDp.growth_completed) {
+                   const d = new Date(expDate);
+                   d.setDate(d.getDate() - 1);
+                   const prevDateStr = d.toISOString().split('T')[0];
+                   const { data: yDay } = await supabase.from('daily_progress').select('*').eq('user_id', user.id).eq('local_date', prevDateStr).single();
+                   updates.growth_completed = false;
+                   updates.growth_streak_count = yDay?.growth_completed ? (yDay.growth_streak_count ?? 0) : 0;
+                   updates.last_growth_completed_date = yDay?.growth_completed ? prevDateStr : null;
+                }
+                
+                await supabase.from('daily_progress').update(updates).eq('id', currentDp.id);
+            }
+        }
         navigate('/timeline', { replace: true });
+    };
+
+    const updateQualityInDB = async (newEvidenceCount: number) => {
+        if (!experience) return;
+        const totalLength = answers.reduce((sum, a) => sum + a.answer.length, 0);
+        const newScore = calcQualityScore({
+            answerCount: answers.length,
+            totalLength,
+            imageCount: experience.image_urls?.length || 0,
+            evidenceCount: newEvidenceCount,
+            hasImpact: !!experience.impact_signal,
+            competencyCount: competencies.length
+        });
+        await supabase.from('experiences').update({ quality_score: newScore }).eq('id', experience.id);
+        setExperience(prev => prev ? { ...prev, quality_score: newScore } : null);
     };
 
     const handleAddEvidence = async () => {
@@ -87,7 +160,11 @@ export function ExperienceDetailPage() {
         const { data } = await supabase.from('evidence_items').insert({
             experience_id: id, type: 'url', url: newEvidenceUrl, title: newEvidenceTitle || null,
         }).select().single();
-        if (data) setEvidence(prev => [...prev, data as EvidenceItem]);
+        if (data) {
+            const newCount = evidence.length + 1;
+            setEvidence(prev => [...prev, data as EvidenceItem]);
+            await updateQualityInDB(newCount);
+        }
         setNewEvidenceUrl('');
         setNewEvidenceTitle('');
         setShowAddEvidence(false);
@@ -96,7 +173,9 @@ export function ExperienceDetailPage() {
 
     const handleDeleteEvidence = async (evId: string) => {
         await supabase.from('evidence_items').delete().eq('id', evId);
+        const newCount = evidence.length - 1;
         setEvidence(prev => prev.filter(e => e.id !== evId));
+        await updateQualityInDB(newCount);
     };
 
     const handleAddSkill = async () => {
@@ -184,6 +263,42 @@ export function ExperienceDetailPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Quality Score & Tips */}
+                {(() => {
+                    const totalLength = answers.reduce((sum, a) => sum + a.answer.length, 0);
+                    const qParams = {
+                        answerCount: answers.length,
+                        totalLength,
+                        imageCount: experience.image_urls?.length || 0,
+                        evidenceCount: evidence.length,
+                        hasImpact: !!experience.impact_signal,
+                        competencyCount: competencies.length
+                    };
+                    const tips = getQualityImprovementTips(qParams);
+                    
+                    return (
+                        <div className="bg-surface-2 rounded-2xl p-4 border border-border shadow-sm transition-colors">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-bold text-gray-800 dark:text-gray-200">💎 기록 완성도</span>
+                                <span className="text-sm font-extrabold text-brand-600 dark:text-brand-400">{experience.quality_score}%</span>
+                            </div>
+                            <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-3">
+                                <div className="h-full bg-brand-500 transition-all duration-500 rounded-full" style={{ width: `${experience.quality_score}%` }} />
+                            </div>
+                            <p className="text-[10px] text-gray-500 mb-2">기록 내용 {totalLength}자 | 답변 {answers.length}개</p>
+                            {tips.length > 0 && (
+                                <div className="space-y-1.5 pt-1">
+                                    {tips.map((tip, i) => (
+                                        <p key={i} className="text-[11px] font-medium text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                            <span className="flex-shrink-0">✨</span> <span>{tip}</span>
+                                        </p>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {/* Impact Signal */}
                 {experience.impact_signal && (
@@ -334,6 +449,33 @@ export function ExperienceDetailPage() {
                         <p className="text-gray-400 dark:text-gray-500 text-sm transition-colors">등록된 스킬이 없어요. 사용한 기술이나 도구가 있다면 태그해보세요!</p>
                     )}
                 </div>
+
+                {/* Related Records */}
+                {relatedRecords.length > 0 && (
+                    <div className="pt-6 border-t border-border mt-8">
+                        <h2 className="font-bold text-gray-800 dark:text-gray-200 mb-3 transition-colors">같은 분야의 다른 경험들 👀</h2>
+                        <div className="space-y-2">
+                            {relatedRecords.map(rel => (
+                                <button
+                                    key={rel.id}
+                                    onClick={() => navigate(`/timeline/${rel.id}`)}
+                                    className="w-full flex items-center justify-between bg-surface-2 hover:bg-surface-3 border border-border p-3 rounded-xl transition-colors text-left"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-sm flex-shrink-0">
+                                            {CATEGORIES[rel.category]?.icon ?? '✨'}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{rel.title}</p>
+                                            <p className="text-xs text-gray-500">{rel.local_date}</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Delete Confirm Modal */}

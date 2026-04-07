@@ -15,6 +15,7 @@ interface StatsData {
     competencyCoverage: number;    // 서로 다른 역량 개수
     distinctCategories30: number;
     totalXP30: number;
+    averageQuality30: number;
     // 주간 목표
     weeklyGoal: number;
     thisWeekCount: number;
@@ -90,15 +91,15 @@ export function StatsPage() {
             const [
                 { data: allExps },
                 { data: allComps },
-                { data: dp7data },
+                { data: dp30data },
                 { data: dpWeek },
                 { data: dp7prev },
             ] = await Promise.all([
-                supabase.from('experiences').select('id,category,trust_label,impact_signal,local_date').eq('user_id', user.id),
+                supabase.from('experiences').select('id,category,trust_label,impact_signal,local_date,quality_score').eq('user_id', user.id),
                 supabase.from('experience_competencies').select('competency_key,experience_id').in('experience_id',
                     (await supabase.from('experiences').select('id').eq('user_id', user.id)).data?.map((e: { id: string }) => e.id) ?? []
                 ),
-                supabase.from('daily_progress').select('local_date,xp_total,completed').eq('user_id', user.id).gte('local_date', date7),
+                supabase.from('daily_progress').select('local_date,xp_total,completed').eq('user_id', user.id).gte('local_date', date30),
                 supabase.from('daily_progress').select('completed').eq('user_id', user.id).gte('local_date', weekStartStr).lte('local_date', today),
                 supabase.from('daily_progress').select('xp_total,completed').eq('user_id', user.id).gte('local_date', date14).lt('local_date', date7),
             ]);
@@ -106,11 +107,14 @@ export function StatsPage() {
             const allExpsList = allExps ?? [];
             const allCompsList = allComps ?? [];
 
-            const exps30List = allExpsList.filter((e: { local_date: string }) => e.local_date >= date30);
+            const exps30List = allExpsList.filter((e: { local_date: string; quality_score: number }) => e.local_date >= date30);
             const total30 = exps30List.length;
             const evidence30 = exps30List.filter((e: { trust_label: string }) => e.trust_label && e.trust_label !== 'self').length;
             const impact30 = exps30List.filter((e: { impact_signal: unknown }) => e.impact_signal !== null).length;
             const distinctCats30 = new Set(exps30List.map((e: { category: string }) => e.category)).size;
+            
+            const qualitySum = exps30List.reduce((s: number, e: { quality_score: number }) => s + (e.quality_score || 0), 0);
+            const avgQuality = total30 > 0 ? Math.round(qualitySum / total30) : 0;
 
             // 30 day distinct competencies
             const exps30Ids = new Set(exps30List.map((e: { id: string }) => e.id));
@@ -135,13 +139,16 @@ export function StatsPage() {
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 3);
 
-            const recent7Days = (dp7data ?? []).filter((d: { completed: boolean }) => d.completed).length;
-            const recent7XP = (dp7data ?? []).reduce((s: number, d: { xp_total: number }) => s + (d.xp_total ?? 0), 0);
+            const dp30List = dp30data ?? [];
+            const dp7data = dp30List.filter((d: { local_date: string }) => d.local_date >= date7);
+
+            const recent7Days = dp7data.filter((d: { completed: boolean }) => d.completed).length;
+            const recent7XP = dp7data.reduce((s: number, d: { xp_total: number }) => s + (d.xp_total ?? 0), 0);
             const prev7Days = (dp7prev ?? []).filter((d: { completed: boolean }) => d.completed).length;
             const prev7XP = (dp7prev ?? []).reduce((s: number, d: { xp_total: number }) => s + (d.xp_total ?? 0), 0);
             const weekCount = (dpWeek ?? []).filter((d: { completed: boolean }) => d.completed).length;
             const weeklyGoal = profile?.weekly_goal ?? 3;
-            const xp30 = (dp7data ?? []).reduce((s: number, d: { xp_total: number }) => s + (d.xp_total ?? 0), 0);
+            const xp30 = dp30List.reduce((s: number, d: { xp_total: number }) => s + (d.xp_total ?? 0), 0);
 
             setStats({
                 totalRecords30: total30,
@@ -152,6 +159,7 @@ export function StatsPage() {
                 competencyCoverage: distinctComps,
                 distinctCategories30: distinctCats30,
                 totalXP30: xp30,
+                averageQuality30: avgQuality,
                 weeklyGoal,
                 thisWeekCount: weekCount,
                 weeklyAchievementPct: Math.min(100, Math.round((weekCount / weeklyGoal) * 100)),
@@ -186,20 +194,24 @@ export function StatsPage() {
         <div className="flex-1 overflow-y-auto pb-28 bg-surface-2 transition-colors duration-300">
             {/* Hero */}
             <div className="bg-gradient-to-br from-brand-500 to-indigo-600 px-5 pt-8 pb-8 text-white">
-                <h1 className="text-2xl font-extrabold mb-1">내 성장 통계 📈</h1>
-                <p className="text-white/70 text-sm">최근 30일 데이터 기준</p>
-                <div className="grid grid-cols-3 gap-3 mt-5">
+                <h1 className="text-2xl font-extrabold mb-1">나의 기록 인사이트 📈</h1>
+                <p className="text-white/70 text-sm">최근 30일 동안 쌓아올린 경험 자산</p>
+                <div className="grid grid-cols-4 gap-2 mt-5">
                     <div className="bg-white/15 rounded-2xl p-3 text-center">
-                        <p className="text-2xl font-extrabold">{stats.totalRecords30}</p>
-                        <p className="text-xs text-white/70 mt-0.5">기록 수</p>
+                        <p className="text-xl font-extrabold">{stats.totalRecords30}</p>
+                        <p className="text-[10px] text-white/70 mt-0.5 whitespace-nowrap">기록 수</p>
                     </div>
                     <div className="bg-white/15 rounded-2xl p-3 text-center">
-                        <p className="text-2xl font-extrabold">{stats.currentStreak}</p>
-                        <p className="text-xs text-white/70 mt-0.5">기록 스트릭 🔥</p>
+                        <p className="text-xl font-extrabold">{stats.averageQuality30}%</p>
+                        <p className="text-[10px] text-white/70 mt-0.5 whitespace-nowrap">평균 완성도</p>
                     </div>
                     <div className="bg-white/15 rounded-2xl p-3 text-center">
-                        <p className="text-2xl font-extrabold">{stats.currentGrowthStreak}</p>
-                        <p className="text-xs text-white/70 mt-0.5">성장 스트릭 🌿</p>
+                        <p className="text-xl font-extrabold">{stats.currentStreak}</p>
+                        <p className="text-[10px] text-white/70 mt-0.5 whitespace-nowrap">기록 연속</p>
+                    </div>
+                    <div className="bg-white/15 rounded-2xl p-3 text-center">
+                        <p className="text-xl font-extrabold">{stats.currentGrowthStreak}</p>
+                        <p className="text-[10px] text-white/70 mt-0.5 whitespace-nowrap">성장 연속</p>
                     </div>
                 </div>
             </div>

@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { Home, BookOpen, BarChart2, Award, Settings } from 'lucide-react';
+import { Home, BookOpen, BarChart2, Sparkles, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
     { to: '/', icon: Home, label: '홈', end: true },
     { to: '/timeline', icon: BookOpen, label: '기록' },
     { to: '/stats', icon: BarChart2, label: '통계' },
-    { to: '/badges', icon: Award, label: '배지' },
+    { to: '/convert', icon: Sparkles, label: '자산' },
     { to: '/settings', icon: Settings, label: '설정' },
 ];
 
