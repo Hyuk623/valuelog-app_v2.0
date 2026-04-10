@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "valuelog-app-v2-2026"
-  }
+  },
+  "targets": {
+    "valuelog-app-v2-2026": {
+      "hosting": {
+        "main": [
+          "valuelog-app-v2-2026"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

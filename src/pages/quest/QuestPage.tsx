@@ -2,12 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
-import { CATEGORIES, XP_PER_QUEST, getLevelFromXP, getLocalDateKST, SKILLS } from '@/types';
-import type { PromptSet, PromptStep, QuestAnswer, Experience, ExperienceAnswer, ExperienceCompetency, ExperienceSkill, Skill, NewlyEarnedBadge, CategoryKey } from '@/types';
+import { CATEGORIES, XP_PER_QUEST, getLocalDateKST, SKILLS } from '@/types';
+import type { PromptSet, PromptStep, QuestAnswer, ExperienceCompetency, NewlyEarnedBadge } from '@/types';
 import { COMPETENCIES, calcCompetencyLevel, calcTrust, calcXPBonus, TRUST_LABELS } from '@/lib/competencies';
 import { calcQualityScore } from '@/lib/quality';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, Send, Check, Sparkles, Plus, Trash2, ExternalLink, Award, Share2, Square, CheckSquare, Wrench, Tag, Zap, X, ImagePlus } from 'lucide-react';
+// 아이콘 라이브러리 의존성 제거 (이모지 및 CSS로 직접 구현)
 import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/lib/utils';
 
@@ -479,7 +479,7 @@ export function QuestPage() {
             {stage !== 'answering' && (
                 <div className="px-5 pt-12 pb-4 flex items-center gap-3 border-b border-border transition-colors flex-shrink-0">
                     <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-surface-2 transition-colors">
-                        <ChevronLeft size={22} className="text-gray-500 dark:text-gray-400" />
+                        <span>←</span>
                     </button>
                     <p className={cn("font-semibold text-brand-500", getFontSizeClass('text-sm'))}>
                         {stage === 'photo' ? '📸 활동 사진' : stage === 'enrichment' ? '✨ 기록 강화하기' : stage === 'completed' ? '저장 완료' : '경험 기록하기'}
@@ -501,7 +501,7 @@ export function QuestPage() {
                                     <div className="font-bold text-gray-900 dark:text-gray-100 text-sm transition-colors">{label}</div>
                                     <div className="text-xs text-gray-400 dark:text-gray-500 truncate transition-colors">{getCategoryDesc(key)}</div>
                                 </div>
-                                <ChevronLeft className="rotate-180 text-gray-300 dark:text-gray-600 flex-shrink-0" size={18} />
+                                <span>⭐</span>
                             </button>
                         ))}
                     </div>
@@ -515,7 +515,7 @@ export function QuestPage() {
                     <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-border flex-shrink-0 bg-surface">
                         <div className="flex items-center gap-2">
                             <button onClick={() => navigate(-1)} className="p-1 rounded-xl hover:bg-surface-2 transition-colors">
-                                <X size={20} className="text-gray-500 dark:text-gray-400" />
+                                <span className="text-gray-500">✕</span>
                             </button>
                             <span className={cn("font-bold text-brand-500", getFontSizeClass('text-sm'))}>
                                 {catInfo.icon} {catInfo.label}
@@ -614,7 +614,7 @@ export function QuestPage() {
                                 size="sm"
                                 className="h-10 w-10 rounded-full flex-shrink-0 p-0 flex items-center justify-center shadow-md shadow-brand-100 relative"
                             >
-                                <Plus size={18} className={currentStep < promptSet.steps.length - 1 ? "" : "rotate-45 transition-transform"} />
+                                <span className={currentStep < promptSet.steps.length - 1 ? "" : "rotate-45 transition-transform"}>+</span>
                             </Button>
                         </div>
                         {!step.required && (
@@ -645,7 +645,7 @@ export function QuestPage() {
                         </div>
                     ) : (
                         <button onClick={() => fileInputRef.current?.click()} className="w-full max-w-xs h-36 border-2 border-dashed border-brand-300 dark:border-brand-900/40 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-all mb-6">
-                            <ImagePlus size={32} className="text-brand-400" />
+                            <span>📸</span>
                             <span className="text-sm font-semibold text-brand-500">사진 선택 / 촬영</span>
                         </button>
                     )}
@@ -707,12 +707,12 @@ export function QuestPage() {
                                             placeholder="https://..." className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-sm focus:outline-none focus:border-brand-400 dark:text-gray-100 transition-colors" />
                                         <input value={p.title} onChange={e => { const d = [...proofDrafts]; d[i] = { ...d[i], title: e.target.value }; setProofDrafts(d); }}
                                             placeholder="제목 (선택)" className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-sm focus:outline-none focus:border-brand-400 dark:text-gray-100 transition-colors" />
-                                        {i > 0 && <button onClick={() => setProofDrafts(d => d.filter((_, j) => j !== i))} className="flex items-center gap-1 text-xs text-red-400 transition-colors"><Trash2 size={12} />삭제</button>}
+                                        {i > 0 && <button onClick={() => setProofDrafts(d => d.filter((_, j) => j !== i))} className="flex items-center gap-1 text-xs text-red-400 transition-colors"><span className="text-xs">🗑️</span>삭제</button>}
                                     </div>
                                 ))}
                                 {proofDrafts.length < 3 && (
                                     <button onClick={() => setProofDrafts(d => [...d, { url: '', title: '' }])} className="flex items-center gap-2 text-sm text-brand-500 font-semibold">
-                                        <Plus size={16} />링크 추가
+                                        <span>+</span>링크 추가
                                     </button>
                                 )}
                             </div>
@@ -772,7 +772,7 @@ export function QuestPage() {
                                                             <button key={ci.key} onClick={() => {
                                                                 setCompetencyDrafts(d => d.map(x => x.key === comp.key ? { ...x, checked: { ...x.checked, [ci.key]: !checked } } : x));
                                                             }} className="flex items-center gap-3 w-full text-left transition-colors">
-                                                                {checked ? <CheckSquare size={18} className="text-brand-500 flex-shrink-0" /> : <Square size={18} className="enrichment-comp-check text-gray-300 flex-shrink-0 transition-colors" />}
+                                                                <span>{checked ? '✅' : '⬜'}</span>
                                                                 <span className="enrichment-comp-item text-sm text-gray-700 transition-colors">{ci.label}</span>
                                                             </button>
                                                         );
